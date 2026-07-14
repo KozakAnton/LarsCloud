@@ -1,8 +1,8 @@
-#define MyAppName "Lar's Cloud"
+﻿#define MyAppName "Lar's Cloud"
 #define MyAppPublisher "Lar's Cloud"
 #define MyAppExeName "LarsCloud.exe"
 #define ProjectRoot SourcePath + "\.."
-#define MyAppVersion GetFileVersion(ProjectRoot + "\artifacts\publish\LarsCloud.exe")
+#define MyAppVersion GetVersionNumbersString(ProjectRoot + "\artifacts\publish\LarsCloud.exe")
 
 [Setup]
 AppId={{B1DC0164-C516-4CE6-83BB-8BDF4D34B175}
@@ -23,8 +23,7 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 PrivilegesRequired=admin
 MinVersion=10.0.10240
-CloseApplications=yes
-ForceCloseApplications=yes
+CloseApplications=force
 RestartApplications=no
 VersionInfoVersion={#MyAppVersion}
 VersionInfoProductName={#MyAppName}
@@ -37,8 +36,8 @@ Name: "ukrainian"; MessagesFile: "compiler:Languages\Ukrainian.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "Створити ярлик на робочому столі"; GroupDescription: "Додаткові ярлики:"; Flags: checkedonce
-Name: "autostart"; Description: "Запускати Lar's Cloud разом із Windows"; GroupDescription: "Автоматична робота:"; Flags: checkedonce
+Name: "desktopicon"; Description: "РЎС‚РІРѕСЂРёС‚Рё СЏСЂР»РёРє РЅР° СЂРѕР±РѕС‡РѕРјСѓ СЃС‚РѕР»С–"; GroupDescription: "Р”РѕРґР°С‚РєРѕРІС– СЏСЂР»РёРєРё:"; Flags: checkedonce
+Name: "autostart"; Description: "Р—Р°РїСѓСЃРєР°С‚Рё Lar's Cloud СЂР°Р·РѕРј С–Р· Windows"; GroupDescription: "РђРІС‚РѕРјР°С‚РёС‡РЅР° СЂРѕР±РѕС‚Р°:"; Flags: checkedonce
 
 [Files]
 Source: "{#ProjectRoot}\artifacts\publish\*"; DestDir: "{app}"; Excludes: "appsettings.json"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -52,7 +51,7 @@ Name: "{autodesktop}\Lar's Cloud"; Filename: "{app}\{#MyAppExeName}"; WorkingDir
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "LarsCloud"; ValueData: """{app}\{#MyAppExeName}"" --background"; Flags: uninsdeletevalue; Tasks: autostart
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "Запустити Lar's Cloud"; WorkingDir: "{app}"; Flags: nowait postinstall runasoriginaluser
+Filename: "{app}\{#MyAppExeName}"; Description: "Р—Р°РїСѓСЃС‚РёС‚Рё Lar's Cloud"; WorkingDir: "{app}"; Flags: nowait postinstall runasoriginaluser
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"
