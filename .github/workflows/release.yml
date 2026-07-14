@@ -1,0 +1,61 @@
+name: Build and publish Windows release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows-installer:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Install Inno Setup
+        shell: powershell
+        run: choco install innosetup -y --no-progress
+
+      - name: Build and test
+        shell: powershell
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+        run: |
+          $version = if ($env:GITHUB_REF_TYPE -eq "tag") { $env:GITHUB_REF_NAME.TrimStart("v") } else { "1.0.0" }
+          $repository = $env:GITHUB_REPOSITORY -replace "^.*/", ""
+          .\scripts\build-installer.ps1 `
+            -Version $version `
+            -GoogleClientId $env:GOOGLE_CLIENT_ID `
+            -GoogleClientSecret $env:GOOGLE_CLIENT_SECRET `
+            -GitHubOwner $env:GITHUB_REPOSITORY_OWNER `
+            -GitHubRepository $repository
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LarsCloud-Windows
+          path: |
+            artifacts/installer/LarsCloud_Setup.exe
+            artifacts/installer/LarsCloud_Setup.exe.sha256
+
+      - name: Create GitHub Release
+        if: github.ref_type == 'tag'
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create $env:GITHUB_REF_NAME `
+            artifacts/installer/LarsCloud_Setup.exe `
+            artifacts/installer/LarsCloud_Setup.exe.sha256 `
+            --title "Lar's Cloud $env:GITHUB_REF_NAME" `
+            --generate-notes

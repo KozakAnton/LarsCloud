@@ -1,0 +1,274 @@
+<Project>
+  <PropertyGroup>
+    <AssemblyName>LarsCloud</AssemblyName>
+    <IntermediateOutputPath>obj/Release/net8.0-windows/win-x64/</IntermediateOutputPath>
+    <BaseIntermediateOutputPath>obj/</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>/workspace/scratch/0ba064eb51ac/LarsCloud/src/LarsCloud.App/obj/</MSBuildProjectExtensionsPath>
+    <_TargetAssemblyProjectName>LarsCloud.App</_TargetAssemblyProjectName>
+  </PropertyGroup>
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>LarsCloud</AssemblyName>
+    <RootNamespace>LarsCloud</RootNamespace>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.28" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assets\app.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="VERSION" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\PRIVACY.md" Link="PRIVACY.md" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/Accessibility.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/Microsoft.CSharp.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.data.sqlite.core/8.0.28/lib/net8.0/Microsoft.Data.Sqlite.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/Microsoft.VisualBasic.Core.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/Microsoft.VisualBasic.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/Microsoft.VisualBasic.Forms.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/Microsoft.Win32.Primitives.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/Microsoft.Win32.Registry.AccessControl.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/Microsoft.Win32.Registry.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/Microsoft.Win32.SystemEvents.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/mscorlib.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/netstandard.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/PresentationCore.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/PresentationFramework.Aero.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/PresentationFramework.Aero2.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/PresentationFramework.AeroLite.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/PresentationFramework.Classic.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/PresentationFramework.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/PresentationFramework.Luna.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/PresentationFramework.Royale.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/PresentationUI.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/ReachFramework.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/sqlitepclraw.bundle_e_sqlite3/2.1.6/lib/netstandard2.0/SQLitePCLRaw.batteries_v2.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/sqlitepclraw.core/2.1.6/lib/netstandard2.0/SQLitePCLRaw.core.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/sqlitepclraw.provider.e_sqlite3/2.1.6/lib/net6.0-windows7.0/SQLitePCLRaw.provider.e_sqlite3.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.AppContext.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Buffers.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.CodeDom.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Collections.Concurrent.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Collections.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Collections.Immutable.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Collections.NonGeneric.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Collections.Specialized.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.ComponentModel.Annotations.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.ComponentModel.DataAnnotations.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.ComponentModel.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.ComponentModel.EventBasedAsync.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.ComponentModel.Primitives.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.ComponentModel.TypeConverter.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Configuration.ConfigurationManager.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Configuration.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Console.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Core.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Data.Common.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Data.DataSetExtensions.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Data.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Design.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Diagnostics.Contracts.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Diagnostics.Debug.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Diagnostics.DiagnosticSource.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Diagnostics.EventLog.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Diagnostics.FileVersionInfo.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Diagnostics.PerformanceCounter.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Diagnostics.Process.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Diagnostics.StackTrace.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Diagnostics.TextWriterTraceListener.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Diagnostics.Tools.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Diagnostics.TraceSource.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Diagnostics.Tracing.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.DirectoryServices.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Drawing.Common.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Drawing.Design.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Drawing.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Drawing.Primitives.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Dynamic.Runtime.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Formats.Asn1.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Formats.Tar.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Globalization.Calendars.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Globalization.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Globalization.Extensions.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.IO.Compression.Brotli.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.IO.Compression.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.IO.Compression.FileSystem.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.IO.Compression.ZipFile.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.IO.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.IO.FileSystem.AccessControl.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.IO.FileSystem.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.IO.FileSystem.DriveInfo.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.IO.FileSystem.Primitives.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.IO.FileSystem.Watcher.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.IO.IsolatedStorage.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.IO.MemoryMappedFiles.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.IO.Packaging.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.IO.Pipes.AccessControl.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.IO.Pipes.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.IO.UnmanagedMemoryStream.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Linq.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Linq.Expressions.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Linq.Parallel.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Linq.Queryable.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Memory.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Net.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Net.Http.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Net.Http.Json.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Net.HttpListener.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Net.Mail.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Net.NameResolution.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Net.NetworkInformation.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Net.Ping.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Net.Primitives.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Net.Quic.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Net.Requests.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Net.Security.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Net.ServicePoint.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Net.Sockets.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Net.WebClient.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Net.WebHeaderCollection.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Net.WebProxy.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Net.WebSockets.Client.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Net.WebSockets.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Numerics.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Numerics.Vectors.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.ObjectModel.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Printing.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Reflection.DispatchProxy.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Reflection.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Reflection.Emit.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Reflection.Emit.ILGeneration.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Reflection.Emit.Lightweight.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Reflection.Extensions.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Reflection.Metadata.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Reflection.Primitives.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Reflection.TypeExtensions.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Resources.Extensions.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Resources.Reader.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Resources.ResourceManager.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Resources.Writer.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Runtime.CompilerServices.Unsafe.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Runtime.CompilerServices.VisualC.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Runtime.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Runtime.Extensions.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Runtime.Handles.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Runtime.InteropServices.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Runtime.InteropServices.JavaScript.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Runtime.InteropServices.RuntimeInformation.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Runtime.Intrinsics.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Runtime.Loader.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Runtime.Numerics.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Runtime.Serialization.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Runtime.Serialization.Formatters.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Runtime.Serialization.Json.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Runtime.Serialization.Primitives.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Runtime.Serialization.Xml.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Security.AccessControl.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Security.Claims.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Security.Cryptography.Algorithms.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Security.Cryptography.Cng.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Security.Cryptography.Csp.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Security.Cryptography.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Security.Cryptography.Encoding.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Security.Cryptography.OpenSsl.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Security.Cryptography.Pkcs.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Security.Cryptography.Primitives.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Security.Cryptography.ProtectedData.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Security.Cryptography.X509Certificates.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Security.Cryptography.Xml.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Security.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Security.Permissions.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Security.Principal.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Security.Principal.Windows.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Security.SecureString.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.ServiceModel.Web.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.ServiceProcess.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Text.Encoding.CodePages.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Text.Encoding.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Text.Encoding.Extensions.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Text.Encodings.Web.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Text.Json.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Text.RegularExpressions.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Threading.AccessControl.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Threading.Channels.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Threading.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Threading.Overlapped.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Threading.Tasks.Dataflow.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Threading.Tasks.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Threading.Tasks.Extensions.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Threading.Tasks.Parallel.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Threading.Thread.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Threading.ThreadPool.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Threading.Timer.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Transactions.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Transactions.Local.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.ValueTuple.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Web.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Web.HttpUtility.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Windows.Controls.Ribbon.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Windows.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Windows.Extensions.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Windows.Forms.Design.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Windows.Forms.Design.Editors.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Windows.Forms.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Windows.Forms.Primitives.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Windows.Input.Manipulations.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Windows.Presentation.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/System.Xaml.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Xml.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Xml.Linq.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Xml.ReaderWriter.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Xml.Serialization.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Xml.XDocument.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Xml.XmlDocument.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Xml.XmlSerializer.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Xml.XPath.dll" />
+    <ReferencePath Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/ref/net8.0/System.Xml.XPath.XDocument.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/UIAutomationClient.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/UIAutomationClientSideProviders.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/UIAutomationProvider.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/UIAutomationTypes.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/WindowsBase.dll" />
+    <ReferencePath Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/ref/net8.0/WindowsFormsIntegration.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="/workspace/scratch/0ba064eb51ac/LarsCloud/src/LarsCloud.App/obj/Release/net8.0-windows/win-x64/MainWindow.g.cs" />
+    <Compile Include="/workspace/scratch/0ba064eb51ac/LarsCloud/src/LarsCloud.App/obj/Release/net8.0-windows/win-x64/App.g.cs" />
+    <Compile Include="/workspace/scratch/0ba064eb51ac/LarsCloud/src/LarsCloud.App/obj/Release/net8.0-windows/win-x64/LarsCloud_Content.g.cs" />
+    <Compile Include="/workspace/scratch/0ba064eb51ac/LarsCloud/src/LarsCloud.App/obj/Release/net8.0-windows/win-x64/GeneratedInternalTypeHelper.g.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Analyzer Include="/tmp/dotnet8/sdk/8.0.414/Sdks/Microsoft.NET.Sdk/targets/../analyzers/Microsoft.CodeAnalysis.CSharp.NetAnalyzers.dll" />
+    <Analyzer Include="/tmp/dotnet8/sdk/8.0.414/Sdks/Microsoft.NET.Sdk/targets/../analyzers/Microsoft.CodeAnalysis.NetAnalyzers.dll" />
+    <Analyzer Include="/tmp/nuget-packages/microsoft.net.illink.tasks/8.0.20/analyzers/dotnet/cs/ILLink.CodeFixProvider.dll" />
+    <Analyzer Include="/tmp/nuget-packages/microsoft.net.illink.tasks/8.0.20/analyzers/dotnet/cs/ILLink.RoslynAnalyzer.dll" />
+    <Analyzer Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/analyzers/dotnet/cs/Microsoft.Interop.ComInterfaceGenerator.dll" />
+    <Analyzer Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/analyzers/dotnet/cs/Microsoft.Interop.JavaScript.JSImportGenerator.dll" />
+    <Analyzer Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/analyzers/dotnet/cs/Microsoft.Interop.LibraryImportGenerator.dll" />
+    <Analyzer Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/analyzers/dotnet/cs/Microsoft.Interop.SourceGeneration.dll" />
+    <Analyzer Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/analyzers/dotnet/cs/System.Text.Json.SourceGeneration.dll" />
+    <Analyzer Include="/tmp/dotnet8/packs/Microsoft.NETCore.App.Ref/8.0.20/analyzers/dotnet/cs/System.Text.RegularExpressions.Generator.dll" />
+    <Analyzer Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/analyzers/dotnet/System.Windows.Forms.Analyzers.dll" />
+    <Analyzer Include="/tmp/nuget-packages/microsoft.windowsdesktop.app.ref/8.0.20/analyzers/dotnet/cs/System.Windows.Forms.Analyzers.CSharp.dll" />
+  </ItemGroup>
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+</Project>

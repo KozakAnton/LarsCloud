@@ -1,0 +1,7 @@
+2026-07-14 18:10:02.144 +03:00 [INF] Lar's Cloud starting.
+2026-07-14 18:10:14.825 +03:00 [INF] Google account connected.
+2026-07-14 18:11:03.411 +03:00 [INF] Created a managed Google Drive folder.
+2026-07-14 18:11:03.928 +03:00 [INF] Created a managed Google Drive folder.
+2026-07-14 18:12:47.205 +03:00 [INF] Sync completed. Files=18; bytes=42618831.
+2026-07-16 18:12:54.120 +03:00 [ERR] Sync failed | HttpRequestException: The network connection was interrupted.
+2026-07-16 18:27:58.882 +03:00 [INF] Sync completed. Files=2; bytes=1184200.

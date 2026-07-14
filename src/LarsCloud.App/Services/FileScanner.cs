@@ -1,0 +1,78 @@
+using System.Security.Cryptography;
+using LarsCloud.Models;
+
+namespace LarsCloud.Services;
+
+public sealed class FileScanner
+{
+    private readonly StateDatabase _database;
+
+    public FileScanner(StateDatabase database) => _database = database;
+
+    public Task<ScanResult> ScanAsync(string rootFolder, IProgress<(int Files, long Bytes)>? progress = null,
+        CancellationToken cancellationToken = default) =>
+        Task.Run(() => ScanCoreAsync(rootFolder, progress, cancellationToken), cancellationToken);
+
+    private async Task<ScanResult> ScanCoreAsync(string rootFolder, IProgress<(int Files, long Bytes)>? progress,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(rootFolder) || !Directory.Exists(rootFolder))
+            throw new DirectoryNotFoundException("Вибрана папка не існує.");
+
+        var previous = (await _database.GetAllFilesAsync(cancellationToken))
+            .ToDictionary(x => x.RelativePath, StringComparer.OrdinalIgnoreCase);
+        var changed = new List<LocalFileCandidate>();
+        var current = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        long totalBytes = 0;
+        var totalFiles = 0;
+
+        var options = new EnumerationOptions
+        {
+            RecurseSubdirectories = true,
+            IgnoreInaccessible = true,
+            ReturnSpecialDirectories = false,
+            AttributesToSkip = FileAttributes.ReparsePoint
+        };
+
+        foreach (var fullPath in Directory.EnumerateFiles(rootFolder, "*", options))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            FileInfo info;
+            try { info = new FileInfo(fullPath); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { continue; }
+
+            var relativePath = Path.GetRelativePath(rootFolder, fullPath).Replace('\\', '/');
+            current.Add(relativePath);
+            totalFiles++;
+            totalBytes += info.Length;
+
+            previous.TryGetValue(relativePath, out var state);
+            if (state is null || !string.Equals(state.RelativePath, relativePath, StringComparison.Ordinal)
+                || state.Size != info.Length || state.LastWriteUtcTicks != info.LastWriteTimeUtc.Ticks)
+            {
+                var hash = await ComputeSha256Async(fullPath, cancellationToken);
+                changed.Add(new LocalFileCandidate(fullPath, relativePath, info.Length,
+                    info.LastWriteTimeUtc.Ticks, hash, state));
+            }
+            if (totalFiles % 50 == 0) progress?.Report((totalFiles, totalBytes));
+        }
+
+        progress?.Report((totalFiles, totalBytes));
+        return new ScanResult(totalBytes, totalFiles, changed.Sum(x => x.Size), changed, current);
+    }
+
+    private static async Task<string> ComputeSha256Async(string path, CancellationToken cancellationToken)
+    {
+        await using var stream = new FileStream(path, new FileStreamOptions
+        {
+            Access = FileAccess.Read,
+            Mode = FileMode.Open,
+            Share = FileShare.ReadWrite | FileShare.Delete,
+            Options = FileOptions.Asynchronous | FileOptions.SequentialScan,
+            BufferSize = 1024 * 1024
+        });
+        using var sha = SHA256.Create();
+        var hash = await sha.ComputeHashAsync(stream, cancellationToken);
+        return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+}
