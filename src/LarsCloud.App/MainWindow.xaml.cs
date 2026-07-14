@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Windows;
-using System.Windows.Media.Animation;
 using LarsCloud.ViewModels;
 
 namespace LarsCloud;
@@ -13,10 +12,20 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = viewModel;
-        Loaded += (_, _) => BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(420))
-        {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-        });
+    }
+
+    private void MinimizeWindow_OnClick(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
+    private void MaximizeWindow_OnClick(object sender, RoutedEventArgs e) =>
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+
+    private void CloseWindow_OnClick(object sender, RoutedEventArgs e) => Close();
+
+    private void Window_OnStateChanged(object? sender, EventArgs e)
+    {
+        if (MaximizeWindowButton is null) return;
+        MaximizeWindowButton.Content = WindowState == WindowState.Maximized ? "❐" : "□";
+        MaximizeWindowButton.ToolTip = WindowState == WindowState.Maximized ? "Відновити" : "Розгорнути";
     }
 
     protected override void OnClosing(CancelEventArgs e)

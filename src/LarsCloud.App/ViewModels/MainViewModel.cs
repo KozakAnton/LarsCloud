@@ -25,7 +25,7 @@ public sealed class MainViewModel : ObservableObject
     private readonly LogService _log;
     private readonly ProductConfiguration _configuration;
     private bool _isAuthenticated;
-    private bool _isSettingsPage;
+    private int _selectedPage;
     private bool _isOnline;
     private bool _isDriveAvailable;
     private bool _isSyncing;
@@ -75,8 +75,9 @@ public sealed class MainViewModel : ObservableObject
         CancelSyncCommand = new RelayCommand(() => _sync.CancelCurrent(), () => IsSyncing);
         OpenLocalFolderCommand = new RelayCommand(OpenLocalFolder);
         OpenDriveCommand = new RelayCommand(OpenDriveFolder);
-        ShowDashboardCommand = new RelayCommand(() => IsSettingsPage = false);
-        ShowSettingsCommand = new RelayCommand(() => IsSettingsPage = true);
+        ShowDashboardCommand = new RelayCommand(() => SelectedPage = 0);
+        ShowHistoryCommand = new RelayCommand(() => SelectedPage = 1);
+        ShowSettingsCommand = new RelayCommand(() => SelectedPage = 2);
         CheckUpdatesCommand = new AsyncCommand(() => CheckUpdatesAsync(false));
         InstallUpdateCommand = new AsyncCommand(InstallUpdateAsync, () => AvailableUpdate is not null);
         OpenLogsCommand = new RelayCommand(() => ProcessLauncher.Open(AppPaths.LogsDirectory));
@@ -105,6 +106,7 @@ public sealed class MainViewModel : ObservableObject
     public ICommand OpenLocalFolderCommand { get; }
     public ICommand OpenDriveCommand { get; }
     public ICommand ShowDashboardCommand { get; }
+    public ICommand ShowHistoryCommand { get; }
     public ICommand ShowSettingsCommand { get; }
     public ICommand CheckUpdatesCommand { get; }
     public ICommand InstallUpdateCommand { get; }
@@ -119,8 +121,20 @@ public sealed class MainViewModel : ObservableObject
 
     public bool IsAuthenticated { get => _isAuthenticated; private set { if (SetProperty(ref _isAuthenticated, value)) OnPropertyChanged(nameof(IsNotAuthenticated)); } }
     public bool IsNotAuthenticated => !IsAuthenticated;
-    public bool IsSettingsPage { get => _isSettingsPage; set { if (SetProperty(ref _isSettingsPage, value)) OnPropertyChanged(nameof(IsDashboardPage)); } }
-    public bool IsDashboardPage => !IsSettingsPage;
+    private int SelectedPage
+    {
+        get => _selectedPage;
+        set
+        {
+            if (!SetProperty(ref _selectedPage, value)) return;
+            OnPropertyChanged(nameof(IsDashboardPage));
+            OnPropertyChanged(nameof(IsHistoryPage));
+            OnPropertyChanged(nameof(IsSettingsPage));
+        }
+    }
+    public bool IsDashboardPage => SelectedPage == 0;
+    public bool IsHistoryPage => SelectedPage == 1;
+    public bool IsSettingsPage => SelectedPage == 2;
     public bool IsOnline { get => _isOnline; private set => SetProperty(ref _isOnline, value); }
     public bool IsDriveAvailable { get => _isDriveAvailable; private set => SetProperty(ref _isDriveAvailable, value); }
     public bool IsSyncing
