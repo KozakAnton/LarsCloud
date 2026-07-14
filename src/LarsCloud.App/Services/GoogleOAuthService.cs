@@ -45,7 +45,11 @@ public sealed class GoogleOAuthService
             throw new AppConfigurationException("У файлі appsettings.json потрібно вказати GoogleClientId для Desktop OAuth.");
 
         var port = GetFreeTcpPort();
-        var redirectUri = $"http://127.0.0.1:{port}/";
+        // Google documents the loopback redirect without a trailing slash. HttpListener
+        // still needs the slash in its prefix, while both OAuth requests must use the
+        // exact same redirect_uri value.
+        var redirectUri = $"http://127.0.0.1:{port}";
+        var listenerPrefix = redirectUri + "/";
         var verifier = Base64Url(RandomNumberGenerator.GetBytes(64));
         var challenge = Base64Url(SHA256.HashData(Encoding.ASCII.GetBytes(verifier)));
         var state = Base64Url(RandomNumberGenerator.GetBytes(32));
@@ -54,7 +58,7 @@ public sealed class GoogleOAuthService
             : new[] { "openid", "email", "profile", "https://www.googleapis.com/auth/drive.file" };
 
         using var listener = new HttpListener();
-        listener.Prefixes.Add(redirectUri);
+        listener.Prefixes.Add(listenerPrefix);
         listener.Start();
 
         var authorizationUrl = "https://accounts.google.com/o/oauth2/v2/auth?" + BuildQuery(new Dictionary<string, string>
@@ -65,7 +69,6 @@ public sealed class GoogleOAuthService
             ["scope"] = string.Join(' ', scopes),
             ["access_type"] = "offline",
             ["prompt"] = "consent select_account",
-            ["include_granted_scopes"] = "true",
             ["code_challenge"] = challenge,
             ["code_challenge_method"] = "S256",
             ["state"] = state
@@ -88,23 +91,33 @@ public sealed class GoogleOAuthService
         if (!CryptographicOperations.FixedTimeEquals(
                 Encoding.UTF8.GetBytes(returnedState ?? ""), Encoding.UTF8.GetBytes(state)))
         {
-            await RespondToBrowserAsync(context.Response, false, "Перевірка безпеки не пройшла. Поверніться до Lar’s Cloud.");
+            await TryRespondToBrowserAsync(context.Response, false, "Перевірка безпеки не пройшла. Поверніться до Lar’s Cloud.");
             throw new OAuthException("OAuth state не збігається.");
         }
         if (!string.IsNullOrWhiteSpace(error) || string.IsNullOrWhiteSpace(code))
         {
-            await RespondToBrowserAsync(context.Response, false, "Вхід скасовано. Можна закрити цю вкладку.");
+            await TryRespondToBrowserAsync(context.Response, false, "Вхід скасовано. Можна закрити цю вкладку.");
             throw new OAuthException(error == "access_denied" ? "Користувач скасував авторизацію." : $"Google OAuth: {error}");
         }
 
-        await RespondToBrowserAsync(context.Response, true, "Google Drive підключено. Можна закрити цю вкладку й повернутися до Lar’s Cloud.");
-        var signedInTokens = await ExchangeCodeAsync(code, verifier, redirectUri, cancellationToken);
-        await PopulateProfileAsync(signedInTokens, cancellationToken);
-        await _vault.SaveAsync(signedInTokens, cancellationToken);
-        _tokens = signedInTokens;
-        await _log.InfoAsync("Google account connected.");
-        SessionChanged?.Invoke(this, EventArgs.Empty);
-        return _tokens;
+        try
+        {
+            var signedInTokens = await ExchangeCodeAsync(code, verifier, redirectUri, cancellationToken);
+            await PopulateProfileAsync(signedInTokens, cancellationToken);
+            await _vault.SaveAsync(signedInTokens, cancellationToken);
+            _tokens = signedInTokens;
+            await _log.InfoAsync("Google account connected.");
+            SessionChanged?.Invoke(this, EventArgs.Empty);
+            await TryRespondToBrowserAsync(context.Response, true,
+                "Google Drive підключено. Можна закрити цю вкладку й повернутися до Lar’s Cloud.");
+            return signedInTokens;
+        }
+        catch
+        {
+            await TryRespondToBrowserAsync(context.Response, false,
+                "Google не завершив підключення. Поверніться до Lar’s Cloud, щоб побачити причину.");
+            throw;
+        }
     }
 
     public async Task<string> GetAccessTokenAsync(bool forceRefresh = false, CancellationToken cancellationToken = default)
@@ -138,7 +151,8 @@ public sealed class GoogleOAuthService
                     SessionChanged?.Invoke(this, EventArgs.Empty);
                     throw new ReauthenticationRequiredException("Сеанс Google завершився. Підключіть обліковий запис повторно.");
                 }
-                throw new OAuthException($"Не вдалося оновити Google-токен: HTTP {(int)response.StatusCode}.");
+                var tokenError = await CreateTokenErrorAsync(response.StatusCode, json, "оновлення токена");
+                throw tokenError;
             }
 
             using var document = JsonDocument.Parse(json);
@@ -182,7 +196,11 @@ public sealed class GoogleOAuthService
         if (!string.IsNullOrWhiteSpace(_configuration.GoogleClientSecret)) values["client_secret"] = _configuration.GoogleClientSecret;
         using var response = await _httpClient.PostAsync("https://oauth2.googleapis.com/token", new FormUrlEncodedContent(values), cancellationToken);
         var json = await response.Content.ReadAsStringAsync(cancellationToken);
-        if (!response.IsSuccessStatusCode) throw new OAuthException($"Google не видав токен: HTTP {(int)response.StatusCode}.");
+        if (!response.IsSuccessStatusCode)
+        {
+            var tokenError = await CreateTokenErrorAsync(response.StatusCode, json, "обмін коду");
+            throw tokenError;
+        }
         using var document = JsonDocument.Parse(json);
         var root = document.RootElement;
         var refreshToken = root.TryGetProperty("refresh_token", out var refresh) ? refresh.GetString() ?? "" : "";
@@ -216,6 +234,49 @@ public sealed class GoogleOAuthService
         response.ContentLength64 = bytes.Length;
         await response.OutputStream.WriteAsync(bytes);
         response.Close();
+    }
+
+    private static async Task TryRespondToBrowserAsync(HttpListenerResponse response, bool success, string message)
+    {
+        try { await RespondToBrowserAsync(response, success, message); }
+        catch (Exception ex) when (ex is HttpListenerException or IOException or ObjectDisposedException)
+        {
+            // Closing the browser tab must not turn a successful OAuth exchange into a failure.
+        }
+    }
+
+    private async Task<OAuthException> CreateTokenErrorAsync(HttpStatusCode statusCode, string json, string operation)
+    {
+        var error = "unknown_error";
+        var description = "";
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            var root = document.RootElement;
+            if (root.TryGetProperty("error", out var errorElement)) error = errorElement.GetString() ?? error;
+            if (root.TryGetProperty("error_description", out var descriptionElement))
+                description = descriptionElement.GetString() ?? "";
+        }
+        catch (JsonException) { }
+
+        await _log.WarningAsync($"Google OAuth {operation} rejected: {error}; HTTP {(int)statusCode}.");
+        var message = error switch
+        {
+            "invalid_client" => "Google відхилив OAuth-клієнт (invalid_client). У Google Cloud створіть Client типу Desktop app і перевірте GOOGLE_CLIENT_ID та GOOGLE_CLIENT_SECRET у GitHub Secrets.",
+            "invalid_grant" => "Google відхилив код авторизації (invalid_grant). Повторіть вхід. Якщо помилка лишається, створіть новий OAuth Client типу Desktop app і перебудуйте програму.",
+            "redirect_uri_mismatch" => "Google відхилив адресу повернення (redirect_uri_mismatch). OAuth Client у Google Cloud має бути типу Desktop app.",
+            "unauthorized_client" => "Цей OAuth Client не дозволяє вхід desktop-застосунку (unauthorized_client). Створіть Client типу Desktop app.",
+            _ => $"Google відхилив OAuth-запит ({error}, HTTP {(int)statusCode}){SafeErrorDescription(description)}."
+        };
+        return new OAuthException(message);
+    }
+
+    private static string SafeErrorDescription(string description)
+    {
+        if (string.IsNullOrWhiteSpace(description)) return "";
+        var clean = description.Replace('\r', ' ').Replace('\n', ' ').Trim();
+        if (clean.Length > 180) clean = clean[..180] + "…";
+        return $": {clean}";
     }
 
     private static int GetFreeTcpPort()

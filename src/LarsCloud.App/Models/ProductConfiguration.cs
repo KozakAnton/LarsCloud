@@ -23,7 +23,14 @@ public sealed class ProductConfiguration
         var path = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
         if (!File.Exists(path)) return new ProductConfiguration();
         await using var stream = File.OpenRead(path);
-        return await JsonSerializer.DeserializeAsync<ProductConfiguration>(stream, cancellationToken: cancellationToken)
-               ?? new ProductConfiguration();
+        var configuration = await JsonSerializer.DeserializeAsync<ProductConfiguration>(stream, cancellationToken: cancellationToken)
+                            ?? new ProductConfiguration();
+        configuration.GoogleClientId = configuration.GoogleClientId?.Trim() ?? "";
+        configuration.GoogleClientSecret = configuration.GoogleClientSecret?.Trim() ?? "";
+        configuration.GitHubOwner = configuration.GitHubOwner?.Trim() ?? "";
+        configuration.GitHubRepository = configuration.GitHubRepository?.Trim() ?? "";
+        configuration.DriveScopes = (configuration.DriveScopes ?? Array.Empty<string>())
+            .Where(scope => !string.IsNullOrWhiteSpace(scope)).Select(scope => scope.Trim()).ToArray();
+        return configuration;
     }
 }

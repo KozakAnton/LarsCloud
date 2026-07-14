@@ -1,4 +1,4 @@
-﻿#define MyAppName "Lar's Cloud"
+#define MyAppName "Lar's Cloud"
 #define MyAppPublisher "Lar's Cloud"
 #define MyAppExeName "LarsCloud.exe"
 #define ProjectRoot SourcePath + "\.."
@@ -36,12 +36,12 @@ Name: "ukrainian"; MessagesFile: "compiler:Languages\Ukrainian.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "РЎС‚РІРѕСЂРёС‚Рё СЏСЂР»РёРє РЅР° СЂРѕР±РѕС‡РѕРјСѓ СЃС‚РѕР»С–"; GroupDescription: "Р”РѕРґР°С‚РєРѕРІС– СЏСЂР»РёРєРё:"; Flags: checkedonce
-Name: "autostart"; Description: "Р—Р°РїСѓСЃРєР°С‚Рё Lar's Cloud СЂР°Р·РѕРј С–Р· Windows"; GroupDescription: "РђРІС‚РѕРјР°С‚РёС‡РЅР° СЂРѕР±РѕС‚Р°:"; Flags: checkedonce
+Name: "desktopicon"; Description: "Створити ярлик на робочому столі"; GroupDescription: "Додаткові ярлики:"; Flags: checkedonce
+Name: "autostart"; Description: "Запускати Lar's Cloud разом із Windows"; GroupDescription: "Автоматична робота:"; Flags: checkedonce
 
 [Files]
 Source: "{#ProjectRoot}\artifacts\publish\*"; DestDir: "{app}"; Excludes: "appsettings.json"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#ProjectRoot}\artifacts\publish\appsettings.json"; DestDir: "{app}"; Flags: onlyifdoesntexist uninsneveruninstall
+Source: "{#ProjectRoot}\artifacts\publish\appsettings.json"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\Lar's Cloud"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
@@ -51,7 +51,7 @@ Name: "{autodesktop}\Lar's Cloud"; Filename: "{app}\{#MyAppExeName}"; WorkingDir
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "LarsCloud"; ValueData: """{app}\{#MyAppExeName}"" --background"; Flags: uninsdeletevalue; Tasks: autostart
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "Р—Р°РїСѓСЃС‚РёС‚Рё Lar's Cloud"; WorkingDir: "{app}"; Flags: nowait postinstall runasoriginaluser
+Filename: "{app}\{#MyAppExeName}"; Description: "Запустити Lar's Cloud"; WorkingDir: "{app}"; Flags: nowait postinstall runasoriginaluser
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"
