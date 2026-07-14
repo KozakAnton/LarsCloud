@@ -1,4 +1,4 @@
-name: Build and publish Windows release
+﻿name: Build and publish Windows release
 
 on:
   push:
@@ -22,11 +22,11 @@ jobs:
           dotnet-version: "8.0.x"
 
       - name: Install Inno Setup
-        shell: powershell
+        shell: pwsh
         run: choco install innosetup -y --no-progress
 
       - name: Build and test
-        shell: powershell
+        shell: pwsh
         env:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
@@ -50,7 +50,7 @@ jobs:
 
       - name: Create GitHub Release
         if: github.ref_type == 'tag'
-        shell: powershell
+        shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -59,3 +59,4 @@ jobs:
             artifacts/installer/LarsCloud_Setup.exe.sha256 `
             --title "Lar's Cloud $env:GITHUB_REF_NAME" `
             --generate-notes
+
