@@ -17,6 +17,11 @@
 
 На етапі розробки додайте потрібні адреси до **Test users**. У тестовому режимі refresh token тестового застосунку може мати обмежений строк дії; для постійного розповсюдження опублікуйте застосунок і виконайте вимоги Google щодо перевірки.
 
+У **Data Access** додайте область доступу
+`https://www.googleapis.com/auth/drive.file`. Під час входу Google може дозволити
+користувачеві підтвердити лише частину запитаних прав, тому на екрані згоди не
+вимикайте пункт доступу Lar’s Cloud до файлів Google Drive.
+
 ## 3. Створіть Desktop OAuth client
 
 1. Відкрийте **Clients** → **Create client**.
@@ -75,6 +80,7 @@ Lar’s Cloud використовує випадковий `http://127.0.0.1:PO
 | `redirect_uri_mismatch` | Client має бути типу Desktop app, не Web application |
 | `access_denied` | Користувач скасував вхід або Workspace admin заборонив застосунок |
 | `Google Drive API has not been used` | Drive API не ввімкнений у правильному Cloud проєкті |
+| `ACCESS_TOKEN_SCOPE_INSUFFICIENT` або `insufficientPermissions` | Додайте `drive.file` у Data Access, вийдіть з акаунта в Lar’s Cloud і увійдіть знову, підтвердивши доступ до файлів |
 | `App is not verified` | Додайте акаунт у Test users або виконайте публікацію/перевірку |
 | Немає refresh token | Відкличте доступ застосунку в Google Account і увійдіть повторно |
 

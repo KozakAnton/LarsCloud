@@ -12,6 +12,8 @@ namespace LarsCloud.Services;
 
 public sealed class GoogleOAuthService
 {
+    private const string DriveFileScope = "https://www.googleapis.com/auth/drive.file";
+    private const string FullDriveScope = "https://www.googleapis.com/auth/drive";
     private readonly ProductConfiguration _configuration;
     private readonly TokenVault _vault;
     private readonly HttpClient _httpClient;
@@ -128,6 +130,13 @@ public sealed class GoogleOAuthService
             _tokens ??= await _vault.LoadAsync(cancellationToken);
             if (_tokens is null || string.IsNullOrWhiteSpace(_tokens.RefreshToken))
                 throw new ReauthenticationRequiredException("Google Drive не підключений.");
+            if (_tokens.GrantedScopes.Length > 0 && !HasWritableDriveScope(_tokens.GrantedScopes))
+            {
+                _tokens = null;
+                _vault.Clear();
+                SessionChanged?.Invoke(this, EventArgs.Empty);
+                throw MissingDriveScopeForExistingSession();
+            }
             if (!forceRefresh && _tokens.ExpiresAtUtc > DateTimeOffset.UtcNow.AddMinutes(2)) return _tokens.AccessToken;
 
             var refreshValues = new Dictionary<string, string>
@@ -156,8 +165,21 @@ public sealed class GoogleOAuthService
             }
 
             using var document = JsonDocument.Parse(json);
-            _tokens.AccessToken = document.RootElement.GetProperty("access_token").GetString() ?? "";
-            var expiresIn = document.RootElement.TryGetProperty("expires_in", out var expires) ? expires.GetInt32() : 3600;
+            var root = document.RootElement;
+            _tokens.AccessToken = root.GetProperty("access_token").GetString() ?? "";
+            var refreshedScopes = ReadGrantedScopes(root);
+            if (refreshedScopes.Length > 0)
+            {
+                if (!HasWritableDriveScope(refreshedScopes))
+                {
+                    _tokens = null;
+                    _vault.Clear();
+                    SessionChanged?.Invoke(this, EventArgs.Empty);
+                    throw MissingDriveScopeForExistingSession();
+                }
+                _tokens.GrantedScopes = refreshedScopes;
+            }
+            var expiresIn = root.TryGetProperty("expires_in", out var expires) ? expires.GetInt32() : 3600;
             _tokens.ExpiresAtUtc = DateTimeOffset.UtcNow.AddSeconds(expiresIn);
             await _vault.SaveAsync(_tokens, cancellationToken);
             return _tokens.AccessToken;
@@ -206,11 +228,15 @@ public sealed class GoogleOAuthService
         var refreshToken = root.TryGetProperty("refresh_token", out var refresh) ? refresh.GetString() ?? "" : "";
         if (string.IsNullOrWhiteSpace(refreshToken))
             throw new OAuthException("Google не повернув refresh token. Відкличте доступ Lar’s Cloud у Google Account і увійдіть повторно.");
+        var grantedScopes = ReadGrantedScopes(root);
+        if (grantedScopes.Length > 0 && !HasWritableDriveScope(grantedScopes))
+            throw new OAuthException("Google-акаунт підтверджено, але дозвіл на файли Google Drive не надано. Повторіть вхід і на екрані Google залиште увімкненим доступ Lar’s Cloud до файлів.");
         return new AuthTokens
         {
             AccessToken = root.GetProperty("access_token").GetString() ?? "",
             RefreshToken = refreshToken,
-            ExpiresAtUtc = DateTimeOffset.UtcNow.AddSeconds(root.TryGetProperty("expires_in", out var expiry) ? expiry.GetInt32() : 3600)
+            ExpiresAtUtc = DateTimeOffset.UtcNow.AddSeconds(root.TryGetProperty("expires_in", out var expiry) ? expiry.GetInt32() : 3600),
+            GrantedScopes = grantedScopes
         };
     }
 
@@ -278,6 +304,20 @@ public sealed class GoogleOAuthService
         if (clean.Length > 180) clean = clean[..180] + "…";
         return $": {clean}";
     }
+
+    private static string[] ReadGrantedScopes(JsonElement root)
+    {
+        if (!root.TryGetProperty("scope", out var scopeElement)) return Array.Empty<string>();
+        return (scopeElement.GetString() ?? "")
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    }
+
+    private static bool HasWritableDriveScope(IEnumerable<string> scopes) =>
+        scopes.Any(scope => scope.Equals(DriveFileScope, StringComparison.OrdinalIgnoreCase)
+                            || scope.Equals(FullDriveScope, StringComparison.OrdinalIgnoreCase));
+
+    private static ReauthenticationRequiredException MissingDriveScopeForExistingSession() =>
+        new("Дозвіл на Google Drive відсутній. У налаштуваннях Lar’s Cloud вийдіть з Google-акаунта, увійдіть знову й підтвердьте доступ до файлів.");
 
     private static int GetFreeTcpPort()
     {

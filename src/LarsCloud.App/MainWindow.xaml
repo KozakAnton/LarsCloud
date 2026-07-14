@@ -7,11 +7,13 @@
         FontFamily="Segoe UI" Opacity="0">
     <Window.Resources>
         <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
             <Setter Property="FontSize" Value="20"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Margin" Value="0,0,0,14"/>
         </Style>
         <Style x:Key="MetricValue" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
             <Setter Property="FontSize" Value="24"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Margin" Value="0,5,0,0"/>
@@ -96,7 +98,8 @@
                         </Ellipse>
                         <StackPanel>
                             <TextBlock Text="{Binding AccountDisplay}" FontWeight="SemiBold" TextAlignment="Right"/>
-                            <TextBlock Text="{Binding StatusText}" Style="{StaticResource Muted}" TextAlignment="Right" MaxWidth="390" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Text="{Binding StatusText}" Style="{StaticResource Muted}" TextAlignment="Right"
+                                       MaxWidth="390" TextTrimming="CharacterEllipsis" ToolTip="{Binding StatusText}"/>
                         </StackPanel>
                     </StackPanel>
                 </Grid>
@@ -137,7 +140,8 @@
                                 <StackPanel>
                                     <StackPanel Orientation="Horizontal">
                                         <Ellipse Width="13" Height="13" Fill="{Binding StatusBrush}" Margin="0,4,11,0"/>
-                                        <TextBlock Text="{Binding StatusText}" FontSize="22" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding StatusText}" FontSize="22" FontWeight="SemiBold"
+                                                   TextWrapping="Wrap" MaxWidth="690"/>
                                     </StackPanel>
                                     <Grid Margin="24,16,0,0">
                                         <Grid.ColumnDefinitions><ColumnDefinition Width="220"/><ColumnDefinition Width="220"/><ColumnDefinition Width="220"/></Grid.ColumnDefinitions>
@@ -256,7 +260,13 @@
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="Синхронізувати кожні" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                                    <ComboBox ItemsSource="{Binding SyncIntervals}" SelectedItem="{Binding SyncIntervalDays, Mode=TwoWay}"/>
+                                    <ComboBox ItemsSource="{Binding SyncIntervals}" SelectedItem="{Binding SyncIntervalDays, Mode=TwoWay}">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding}" Foreground="{StaticResource TextBrush}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
                                     <TextBlock Text="дн." VerticalAlignment="Center" Margin="10,0,0,0"/>
                                 </StackPanel>
                             </StackPanel>

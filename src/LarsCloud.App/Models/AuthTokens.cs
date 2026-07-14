@@ -7,4 +7,5 @@ public sealed class AuthTokens
     public DateTimeOffset ExpiresAtUtc { get; set; }
     public string Email { get; set; } = "";
     public string DisplayName { get; set; } = "";
+    public string[] GrantedScopes { get; set; } = Array.Empty<string>();
 }

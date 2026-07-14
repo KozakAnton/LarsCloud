@@ -393,8 +393,19 @@ public sealed class MainViewModel : ObservableObject
         catch (Exception ex)
         {
             IsDriveAvailable = false;
-            StatusText = ex is ReauthenticationRequiredException ? ex.Message : "Google Drive тимчасово недоступний";
+            DriveUsage = "Немає даних";
+            DriveRemaining = "Перевірте доступ до Google Drive";
+            DriveUsagePercent = 0;
+            QuotaWarning = "";
+            StatusText = ex switch
+            {
+                ReauthenticationRequiredException => ex.Message,
+                DriveApiException => ex.Message,
+                OAuthException => ex.Message,
+                _ => "Google Drive тимчасово недоступний"
+            };
             StatusBrush = Brush("#FF5573");
+            await _log.ErrorAsync("Google Drive availability check failed", ex);
         }
     }
 

@@ -325,22 +325,111 @@ public sealed class GoogleDriveService
         throw new ReauthenticationRequiredException("Потрібно повторно увійти в Google-акаунт.");
     }
 
-    private static async Task EnsureSuccessAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+    private async Task EnsureSuccessAsync(HttpResponseMessage response, CancellationToken cancellationToken)
     {
         if (response.IsSuccessStatusCode) return;
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        var error = ParseGoogleError(body);
+        var reason = error.Reasons.FirstOrDefault() ?? error.Status;
+        var signal = string.Join(' ', error.Reasons.Append(error.Status).Append(error.Message));
+        await _log.WarningAsync($"Google Drive request failed: HTTP {(int)response.StatusCode}; "
+                                + $"reason={SafeErrorPart(reason, 80)}; status={SafeErrorPart(error.Status, 80)}; "
+                                + $"message={SafeErrorPart(error.Message, 180)}.");
+
         var friendly = response.StatusCode switch
         {
             HttpStatusCode.Unauthorized => "Потрібно повторно увійти в Google-акаунт.",
-            HttpStatusCode.Forbidden when body.Contains("storageQuota", StringComparison.OrdinalIgnoreCase) ||
-                                               body.Contains("quotaExceeded", StringComparison.OrdinalIgnoreCase)
+            HttpStatusCode.Forbidden when ContainsAny(signal,
+                "serviceDisabled", "accessNotConfigured", "api_not_activated",
+                "has not been used in project", "it is disabled")
+                => "Google Drive API вимкнено для проєкту. У Google Cloud відкрийте APIs & Services → Library → Google Drive API, натисніть Enable, зачекайте кілька хвилин і повторіть.",
+            HttpStatusCode.Forbidden when ContainsAny(signal,
+                "access_token_scope_insufficient", "insufficientPermissions", "insufficient authentication scopes")
+                => "Google-акаунт підключено без дозволу на файли Drive. У налаштуваннях Lar’s Cloud вийдіть з акаунта, увійдіть знову й підтвердьте доступ до файлів.",
+            HttpStatusCode.Forbidden when ContainsAny(signal, "storageQuota", "quotaExceeded")
                 => "Недостатньо місця на Google Drive.",
-            HttpStatusCode.Forbidden => "Google Drive відхилив доступ до файлу.",
+            HttpStatusCode.Forbidden when ContainsAny(signal,
+                "dailyLimitExceeded", "rateLimitExceeded", "userRateLimitExceeded", "sharingRateLimitExceeded")
+                => "Google Drive тимчасово обмежив кількість запитів. Зачекайте кілька хвилин і повторіть.",
+            HttpStatusCode.Forbidden when ContainsAny(signal, "domainPolicy", "admin_policy_enforced")
+                => "Доступ до Google Drive заблоковано політикою вашого Google-акаунта або організації.",
+            HttpStatusCode.Forbidden when ContainsAny(signal, "appNotAuthorizedToFile", "insufficientFilePermissions")
+                => "Lar’s Cloud не має доступу до цього об’єкта Google Drive. Підключіть акаунт повторно або дозвольте доступ до файлу.",
+            HttpStatusCode.Forbidden => FriendlyGoogleMessage("Google Drive відхилив запит", error, response.StatusCode),
             HttpStatusCode.NotFound => "Файл або папку на Google Drive не знайдено.",
-            _ => $"Помилка Google Drive: HTTP {(int)response.StatusCode}."
+            HttpStatusCode.TooManyRequests => "Google Drive тимчасово обмежив кількість запитів. Зачекайте кілька хвилин і повторіть.",
+            _ when (int)response.StatusCode >= 500 => "Сервіс Google Drive тимчасово недоступний. Повторіть трохи пізніше.",
+            _ => FriendlyGoogleMessage("Помилка Google Drive", error, response.StatusCode)
         };
-        throw new DriveApiException(friendly, response.StatusCode);
+        throw new DriveApiException(friendly, response.StatusCode, reason);
     }
+
+    private static GoogleApiError ParseGoogleError(string body)
+    {
+        var message = "";
+        var status = "";
+        var reasons = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            if (!document.RootElement.TryGetProperty("error", out var error))
+                return new GoogleApiError(message, status, reasons.ToArray());
+            if (error.ValueKind == JsonValueKind.String)
+                return new GoogleApiError(error.GetString() ?? "", status, reasons.ToArray());
+            if (error.ValueKind != JsonValueKind.Object)
+                return new GoogleApiError(message, status, reasons.ToArray());
+
+            if (error.TryGetProperty("message", out var messageElement)) message = messageElement.GetString() ?? "";
+            if (error.TryGetProperty("status", out var statusElement)) status = statusElement.GetString() ?? "";
+            if (error.TryGetProperty("errors", out var errors) && errors.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in errors.EnumerateArray())
+                {
+                    if (item.TryGetProperty("reason", out var reasonElement)
+                        && !string.IsNullOrWhiteSpace(reasonElement.GetString()))
+                        reasons.Add(reasonElement.GetString()!);
+                    if (string.IsNullOrWhiteSpace(message) && item.TryGetProperty("message", out var nestedMessage))
+                        message = nestedMessage.GetString() ?? "";
+                }
+            }
+            if (error.TryGetProperty("details", out var details) && details.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in details.EnumerateArray())
+                {
+                    if (item.TryGetProperty("reason", out var reasonElement)
+                        && !string.IsNullOrWhiteSpace(reasonElement.GetString()))
+                        reasons.Add(reasonElement.GetString()!);
+                }
+            }
+        }
+        catch (JsonException) { }
+        return new GoogleApiError(message, status, reasons.ToArray());
+    }
+
+    private static bool ContainsAny(string value, params string[] candidates) =>
+        candidates.Any(candidate => value.Contains(candidate, StringComparison.OrdinalIgnoreCase));
+
+    private static string FriendlyGoogleMessage(string prefix, GoogleApiError error, HttpStatusCode statusCode)
+    {
+        var detail = SafeErrorPart(error.Message, 220);
+        var code = error.Reasons.FirstOrDefault() ?? error.Status;
+        if (string.IsNullOrWhiteSpace(detail))
+            return string.IsNullOrWhiteSpace(code)
+                ? $"{prefix}: HTTP {(int)statusCode}."
+                : $"{prefix} ({SafeErrorPart(code, 80)}).";
+        return string.IsNullOrWhiteSpace(code)
+            ? $"{prefix}: {detail}"
+            : $"{prefix}: {detail} ({SafeErrorPart(code, 80)}).";
+    }
+
+    private static string SafeErrorPart(string value, int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return "";
+        var clean = value.Replace('\r', ' ').Replace('\n', ' ').Trim();
+        return clean.Length <= maxLength ? clean : clean[..maxLength] + "…";
+    }
+
+    private sealed record GoogleApiError(string Message, string Status, string[] Reasons);
 
     private static DriveFile ParseDriveFile(JsonElement item)
     {
@@ -387,6 +476,11 @@ public sealed class GoogleDriveService
 public sealed record FileUploadProgress(long UploadedBytes, long TotalBytes);
 public sealed class DriveApiException : Exception
 {
-    public DriveApiException(string message, HttpStatusCode? statusCode = null) : base(message) => StatusCode = statusCode;
+    public DriveApiException(string message, HttpStatusCode? statusCode = null, string? reason = null) : base(message)
+    {
+        StatusCode = statusCode;
+        Reason = reason;
+    }
     public HttpStatusCode? StatusCode { get; }
+    public string? Reason { get; }
 }
