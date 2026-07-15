@@ -51,7 +51,7 @@ Name: "{autodesktop}\Lar's Cloud"; Filename: "{app}\{#MyAppExeName}"; WorkingDir
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "LarsCloud"; ValueData: """{app}\{#MyAppExeName}"" --background"; Flags: uninsdeletevalue; Tasks: autostart
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "Запустити Lar's Cloud"; WorkingDir: "{app}"; Flags: nowait postinstall runasoriginaluser
+Filename: "{app}\{#MyAppExeName}"; Description: "Запустити Lar's Cloud"; WorkingDir: "{app}"; Flags: nowait postinstall runasoriginaluser skipifsilent
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"

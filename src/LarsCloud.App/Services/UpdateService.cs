@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using LarsCloud.Infrastructure;
 using LarsCloud.Models;
@@ -108,18 +109,19 @@ public sealed class UpdateService
         return target;
     }
 
-    public static void LaunchInstallerAfterExit(string installerPath, int processId)
+    public static void LaunchInstallerAfterExit(string installerPath, int processId, string applicationPath)
     {
         var fullPath = Path.GetFullPath(installerPath);
         if (!File.Exists(fullPath))
             throw new FileNotFoundException("Завантажений інсталятор не знайдено.", fullPath);
         if (processId <= 0)
             throw new ArgumentOutOfRangeException(nameof(processId));
+        var fullApplicationPath = Path.GetFullPath(applicationPath);
+        if (!File.Exists(fullApplicationPath))
+            throw new FileNotFoundException("Файл Lar’s Cloud не знайдено.", fullApplicationPath);
 
-        var escapedPath = fullPath.Replace("'", "''", StringComparison.Ordinal);
-        var command = $"Wait-Process -Id {processId} -ErrorAction SilentlyContinue; " +
-                      $"Start-Process -FilePath '{escapedPath}' " +
-                      "-ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/UPDATE') -Verb RunAs";
+        var helperPath = Path.Combine(Path.GetTempPath(), $"LarsCloud_Update_{Guid.NewGuid():N}.ps1");
+        File.WriteAllText(helperPath, UpdateHelperScript, new UTF8Encoding(false));
         var startInfo = new ProcessStartInfo
         {
             FileName = "powershell.exe",
@@ -130,12 +132,83 @@ public sealed class UpdateService
         startInfo.ArgumentList.Add("-NoLogo");
         startInfo.ArgumentList.Add("-NoProfile");
         startInfo.ArgumentList.Add("-NonInteractive");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
         startInfo.ArgumentList.Add("-WindowStyle");
         startInfo.ArgumentList.Add("Hidden");
-        startInfo.ArgumentList.Add("-Command");
-        startInfo.ArgumentList.Add(command);
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(helperPath);
+        startInfo.ArgumentList.Add("-ParentProcessId");
+        startInfo.ArgumentList.Add(processId.ToString());
+        startInfo.ArgumentList.Add("-InstallerPath");
+        startInfo.ArgumentList.Add(fullPath);
+        startInfo.ArgumentList.Add("-ApplicationPath");
+        startInfo.ArgumentList.Add(fullApplicationPath);
 
-        if (Process.Start(startInfo) is null)
-            throw new InvalidOperationException("Не вдалося підготувати запуск інсталятора.");
+        try
+        {
+            if (Process.Start(startInfo) is null)
+                throw new InvalidOperationException("Не вдалося підготувати запуск інсталятора.");
+        }
+        catch
+        {
+            try { File.Delete(helperPath); } catch { }
+            throw;
+        }
     }
+
+    private static readonly string UpdateHelperScript = string.Join(Environment.NewLine, new[]
+    {
+        "param(",
+        "    [Parameter(Mandatory = $true)][int]$ParentProcessId,",
+        "    [Parameter(Mandatory = $true)][string]$InstallerPath,",
+        "    [Parameter(Mandatory = $true)][string]$ApplicationPath",
+        ")",
+        "",
+        "$ErrorActionPreference = 'Stop'",
+        "$logPath = Join-Path $env:TEMP 'LarsCloud_Update.log'",
+        "",
+        "function Write-UpdateLog([string]$Message) {",
+        "    $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'",
+        "    Add-Content -LiteralPath $logPath -Value \"$timestamp $Message\" -Encoding UTF8",
+        "}",
+        "",
+        "try {",
+        "    Write-UpdateLog \"Waiting for Lar's Cloud process $ParentProcessId to exit.\"",
+        "    Wait-Process -Id $ParentProcessId -ErrorAction SilentlyContinue",
+        "    Start-Sleep -Milliseconds 500",
+        "",
+        "    $remaining = @(Get-Process -Name 'LarsCloud' -ErrorAction SilentlyContinue)",
+        "    if ($remaining.Count -gt 0) {",
+        "        Write-UpdateLog \"Closing $($remaining.Count) remaining Lar's Cloud process(es).\"",
+        "        $remaining | Stop-Process -Force -ErrorAction SilentlyContinue",
+        "        Start-Sleep -Milliseconds 700",
+        "    }",
+        "",
+        "    $arguments = @(",
+        "        '/VERYSILENT',",
+        "        '/SUPPRESSMSGBOXES',",
+        "        '/NORESTART',",
+        "        '/NORESTARTAPPLICATIONS',",
+        "        '/CLOSEAPPLICATIONS',",
+        "        '/FORCECLOSEAPPLICATIONS',",
+        "        '/UPDATE'",
+        "    )",
+        "    Write-UpdateLog \"Starting verified installer: $InstallerPath\"",
+        "    $setup = Start-Process -FilePath $InstallerPath -ArgumentList $arguments -Verb RunAs -PassThru -Wait",
+        "    Write-UpdateLog \"Installer finished with exit code $($setup.ExitCode).\"",
+        "",
+        "    if ($setup.ExitCode -eq 0 -and (Test-Path -LiteralPath $ApplicationPath)) {",
+        "        Start-Sleep -Milliseconds 800",
+        "        Write-UpdateLog \"Starting updated Lar's Cloud.\"",
+        "        Start-Process -FilePath $ApplicationPath",
+        "    }",
+        "}",
+        "catch {",
+        "    Write-UpdateLog \"Update failed: $($_.Exception.Message)\"",
+        "}",
+        "finally {",
+        "    Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue",
+        "}"
+    });
 }
