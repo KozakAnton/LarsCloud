@@ -78,35 +78,48 @@ public sealed class UpdateService
         if (string.IsNullOrWhiteSpace(update.Sha256) || update.Sha256.Length != 64)
             throw new InvalidDataException("Реліз не містить SHA-256. Автоматичне встановлення заблоковано з міркувань безпеки.");
         AppPaths.EnsureCreated();
-        var target = Path.Combine(AppPaths.UpdatesDirectory, _configuration.InstallerAssetName);
+        var assetName = Path.GetFileName(_configuration.InstallerAssetName);
+        var targetName = $"{Path.GetFileNameWithoutExtension(assetName)}_{update.Version}_{Guid.NewGuid():N}{Path.GetExtension(assetName)}";
+        var target = Path.Combine(AppPaths.UpdatesDirectory, targetName);
         var temp = target + ".download";
-        using var response = await _httpClient.GetAsync(update.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        response.EnsureSuccessStatusCode();
-        var length = response.Content.Headers.ContentLength;
-        await using (var source = await response.Content.ReadAsStreamAsync(cancellationToken))
-        await using (var destination = new FileStream(temp, FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024, true))
+        try
         {
-            var buffer = new byte[1024 * 1024];
-            long copied = 0;
-            int read;
-            while ((read = await source.ReadAsync(buffer, cancellationToken)) > 0)
+            using var response = await _httpClient.GetAsync(update.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            response.EnsureSuccessStatusCode();
+            var length = response.Content.Headers.ContentLength;
+            await using (var source = await response.Content.ReadAsStreamAsync(cancellationToken))
+            await using (var destination = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.None, 1024 * 1024, true))
             {
-                await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
-                copied += read;
-                if (length is > 0) progress?.Report(copied * 100d / length.Value);
+                var buffer = new byte[1024 * 1024];
+                long copied = 0;
+                int read;
+                while ((read = await source.ReadAsync(buffer, cancellationToken)) > 0)
+                {
+                    await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+                    copied += read;
+                    if (length is > 0) progress?.Report(copied * 100d / length.Value);
+                }
             }
+
+            string actual;
+            await using (var verifyStream = new FileStream(temp, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                using var sha = SHA256.Create();
+                actual = Convert.ToHexString(await sha.ComputeHashAsync(verifyStream, cancellationToken));
+            }
+
+            if (!actual.Equals(update.Sha256, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException("Контрольна сума оновлення не збігається. Файл видалено.");
+
+            File.Move(temp, target);
+            await _log.InfoAsync($"Update {update.Tag} downloaded and verified.");
+            return target;
         }
-        await using var verifyStream = File.OpenRead(temp);
-        using var sha = SHA256.Create();
-        var actual = Convert.ToHexString(await sha.ComputeHashAsync(verifyStream, cancellationToken));
-        if (!actual.Equals(update.Sha256, StringComparison.OrdinalIgnoreCase))
+        catch
         {
-            File.Delete(temp);
-            throw new InvalidDataException("Контрольна сума оновлення не збігається. Файл видалено.");
+            try { File.Delete(temp); } catch { }
+            throw;
         }
-        File.Move(temp, target, true);
-        await _log.InfoAsync($"Update {update.Tag} downloaded and verified.");
-        return target;
     }
 
     public static void LaunchInstallerAfterExit(string installerPath, int processId, string applicationPath)

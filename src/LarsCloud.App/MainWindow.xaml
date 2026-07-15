@@ -4,7 +4,7 @@
         xmlns:controls="clr-namespace:LarsCloud.Controls"
         Title="Lar's Cloud" Width="1220" Height="800" MinWidth="1040" MinHeight="700"
         WindowStartupLocation="CenterScreen" Background="{StaticResource BaseBrush}"
-        FontFamily="Segoe UI" WindowStyle="None" ResizeMode="CanResize"
+        FontFamily="Segoe UI" WindowStyle="None" ResizeMode="NoResize" BorderThickness="0"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
         TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType"
         RenderOptions.ClearTypeHint="Enabled" RenderOptions.BitmapScalingMode="HighQuality"
@@ -196,6 +196,20 @@
                                 </StackPanel>
                             </Border>
                             <TextBlock Text="{Binding CurrentVersion}" Style="{StaticResource Muted}" HorizontalAlignment="Center"/>
+                            <Border Background="#332E5DFC"
+                                    BorderBrush="#66536FFF"
+                                    BorderThickness="1"
+                                    CornerRadius="9"
+                                    Padding="9,7"
+                                    Margin="0,8,0,0"
+                                    Visibility="{Binding HasAvailableUpdate, Converter={StaticResource BoolVisibility}}">
+                                <TextBlock Text="{Binding SidebarUpdateText}"
+                                           Foreground="#91A8FF"
+                                           FontSize="11"
+                                           FontWeight="SemiBold"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"/>
+                            </Border>
                         </StackPanel>
                     </Grid>
                 </Border>

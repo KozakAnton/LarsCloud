@@ -177,6 +177,8 @@ public sealed class MainViewModel : ObservableObject
     public string EtaText { get => _etaText; private set => SetProperty(ref _etaText, value); }
     public string CurrentVersion => $"Версія {_updates.CurrentVersion.ToString(3)}";
     public string UpdateText => AvailableUpdate is null ? "Оновлень не знайдено" : $"Доступна версія {AvailableUpdate.Version}";
+    public bool HasAvailableUpdate => AvailableUpdate is not null;
+    public string SidebarUpdateText => AvailableUpdate is null ? "" : $"Вийшла нова версія {AvailableUpdate.Version}";
     public bool IsUpdatePromptVisible
     {
         get => _isUpdatePromptVisible;
@@ -190,6 +192,8 @@ public sealed class MainViewModel : ObservableObject
         {
             if (!SetProperty(ref _availableUpdate, value)) return;
             OnPropertyChanged(nameof(UpdateText));
+            OnPropertyChanged(nameof(HasAvailableUpdate));
+            OnPropertyChanged(nameof(SidebarUpdateText));
             (InstallUpdateCommand as AsyncCommand)?.RaiseCanExecuteChanged();
         }
     }
