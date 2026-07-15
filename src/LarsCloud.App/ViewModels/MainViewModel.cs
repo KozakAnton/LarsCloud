@@ -50,6 +50,7 @@ public sealed class MainViewModel : ObservableObject
     private string _speedText = "";
     private string _etaText = "";
     private UpdateInfo? _availableUpdate;
+    private bool _isUpdatePromptVisible;
 
     public MainViewModel(SettingsService settings, GoogleOAuthService oauth, GoogleDriveService drive, ConnectivityService connectivity,
         SyncEngine sync, StateDatabase database, UpdateService updates, AutostartService autostart,
@@ -80,6 +81,7 @@ public sealed class MainViewModel : ObservableObject
         ShowSettingsCommand = new RelayCommand(() => SelectedPage = 2);
         CheckUpdatesCommand = new AsyncCommand(() => CheckUpdatesAsync(false));
         InstallUpdateCommand = new AsyncCommand(InstallUpdateAsync, () => AvailableUpdate is not null);
+        DismissUpdateCommand = new RelayCommand(() => IsUpdatePromptVisible = false);
         OpenLogsCommand = new RelayCommand(() => ProcessLauncher.Open(AppPaths.LogsDirectory));
         ClearLogsCommand = new AsyncCommand(ClearLogsAsync);
         ClearServiceDataCommand = new AsyncCommand(ClearServiceDataAsync, () => !IsSyncing);
@@ -110,6 +112,7 @@ public sealed class MainViewModel : ObservableObject
     public ICommand ShowSettingsCommand { get; }
     public ICommand CheckUpdatesCommand { get; }
     public ICommand InstallUpdateCommand { get; }
+    public ICommand DismissUpdateCommand { get; }
     public ICommand OpenLogsCommand { get; }
     public ICommand ClearLogsCommand { get; }
     public ICommand ClearServiceDataCommand { get; }
@@ -174,6 +177,12 @@ public sealed class MainViewModel : ObservableObject
     public string EtaText { get => _etaText; private set => SetProperty(ref _etaText, value); }
     public string CurrentVersion => $"Версія {_updates.CurrentVersion.ToString(3)}";
     public string UpdateText => AvailableUpdate is null ? "Оновлень не знайдено" : $"Доступна версія {AvailableUpdate.Version}";
+    public bool IsUpdatePromptVisible
+    {
+        get => _isUpdatePromptVisible;
+        private set => SetProperty(ref _isUpdatePromptVisible, value);
+    }
+
     public UpdateInfo? AvailableUpdate
     {
         get => _availableUpdate;
@@ -258,13 +267,16 @@ public sealed class MainViewModel : ObservableObject
             AvailableUpdate = await _updates.CheckAsync();
             if (AvailableUpdate is not null)
             {
+                IsUpdatePromptVisible = true;
                 NotificationRequested?.Invoke(this, new UserNotification("Доступне оновлення",
                     $"Lar’s Cloud {AvailableUpdate.Version} готовий до завантаження.", false));
-                if (!silent) MessageBox.Show($"Доступна версія {AvailableUpdate.Version}.\n\n{AvailableUpdate.ReleaseNotes}",
-                    "Оновлення Lar’s Cloud", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-            else if (!silent) MessageBox.Show("У вас установлена найновіша версія.", "Lar’s Cloud",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            else
+            {
+                IsUpdatePromptVisible = false;
+                if (!silent) MessageBox.Show("У вас установлена найновіша версія.", "Lar’s Cloud",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
         catch (Exception ex)
         {
@@ -451,19 +463,20 @@ public sealed class MainViewModel : ObservableObject
 
     private async Task InstallUpdateAsync()
     {
-        if (AvailableUpdate is null) return;
-        if (MessageBox.Show($"Завантажити й встановити Lar’s Cloud {AvailableUpdate.Version}?",
-                "Оновлення", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        var update = AvailableUpdate;
+        if (update is null) return;
+        IsUpdatePromptVisible = false;
         try
         {
             StatusText = "Завантаження оновлення…";
             StatusBrush = Brush("#F6B84A");
             var progress = new Progress<double>(value => StatusText = $"Завантаження оновлення: {value:0}%");
-            var path = await _updates.DownloadAsync(AvailableUpdate, progress);
+            var path = await _updates.DownloadAsync(update, progress);
             UpdateInstallerReady?.Invoke(this, path);
         }
         catch (Exception ex)
         {
+            IsUpdatePromptVisible = true;
             await _log.ErrorAsync("Update installation failed", ex);
             MessageBox.Show(ex.Message, "Оновлення", MessageBoxButton.OK, MessageBoxImage.Error);
         }

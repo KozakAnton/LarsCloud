@@ -107,11 +107,11 @@ public partial class App : System.Windows.Application
         _exiting = true;
         if (!string.IsNullOrWhiteSpace(installerPath))
         {
-            try { UpdateService.LaunchInstaller(installerPath); }
+            try { UpdateService.LaunchInstallerAfterExit(installerPath, Environment.ProcessId); }
             catch (Exception ex)
             {
                 _exiting = false;
-                MessageBox.Show($"Не вдалося запустити Installer.\n\n{ex.Message}", "Оновлення Lar’s Cloud",
+                MessageBox.Show($"Не вдалося підготувати Installer до запуску.\n\n{ex.Message}", "Оновлення Lar’s Cloud",
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -120,7 +120,15 @@ public partial class App : System.Windows.Application
         _window?.AllowClose();
         _tray?.Dispose();
         _tray = null;
-        if (_scheduler is not null) await _scheduler.DisposeAsync();
+        if (_scheduler is not null)
+        {
+            try { await _scheduler.DisposeAsync(); }
+            catch (Exception ex)
+            {
+                if (_log is not null) await _log.ErrorAsync("Scheduler shutdown failed", ex);
+            }
+            _scheduler = null;
+        }
         _window?.Close();
         Shutdown();
     }

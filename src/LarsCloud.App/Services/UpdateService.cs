@@ -108,12 +108,34 @@ public sealed class UpdateService
         return target;
     }
 
-    public static void LaunchInstaller(string installerPath)
+    public static void LaunchInstallerAfterExit(string installerPath, int processId)
     {
-        Process.Start(new ProcessStartInfo(installerPath, "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /UPDATE")
+        var fullPath = Path.GetFullPath(installerPath);
+        if (!File.Exists(fullPath))
+            throw new FileNotFoundException("Завантажений інсталятор не знайдено.", fullPath);
+        if (processId <= 0)
+            throw new ArgumentOutOfRangeException(nameof(processId));
+
+        var escapedPath = fullPath.Replace("'", "''", StringComparison.Ordinal);
+        var command = $"Wait-Process -Id {processId} -ErrorAction SilentlyContinue; " +
+                      $"Start-Process -FilePath '{escapedPath}' " +
+                      "-ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/UPDATE') -Verb RunAs";
+        var startInfo = new ProcessStartInfo
         {
-            UseShellExecute = true,
-            Verb = "runas"
-        });
+            FileName = "powershell.exe",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            WindowStyle = ProcessWindowStyle.Hidden
+        };
+        startInfo.ArgumentList.Add("-NoLogo");
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-NonInteractive");
+        startInfo.ArgumentList.Add("-WindowStyle");
+        startInfo.ArgumentList.Add("Hidden");
+        startInfo.ArgumentList.Add("-Command");
+        startInfo.ArgumentList.Add(command);
+
+        if (Process.Start(startInfo) is null)
+            throw new InvalidOperationException("Не вдалося підготувати запуск інсталятора.");
     }
 }

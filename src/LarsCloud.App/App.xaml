@@ -13,6 +13,7 @@
         <Color x:Key="BlueColor">#2E5DFC</Color>
         <Color x:Key="PurpleColor">#4838CC</Color>
         <Color x:Key="GreenColor">#2ACE7A</Color>
+        <Color x:Key="DangerColor">#C83D57</Color>
         <Color x:Key="TextColor">#F5F7F7</Color>
         <Color x:Key="MutedColor">#8B9BC1</Color>
         <SolidColorBrush x:Key="BaseBrush" Color="{StaticResource BaseColor}"/>
@@ -21,6 +22,7 @@
         <SolidColorBrush x:Key="BlueBrush" Color="{StaticResource BlueColor}"/>
         <SolidColorBrush x:Key="PurpleBrush" Color="{StaticResource PurpleColor}"/>
         <SolidColorBrush x:Key="GreenBrush" Color="{StaticResource GreenColor}"/>
+        <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}"/>
         <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}"/>
         <SolidColorBrush x:Key="MutedBrush" Color="{StaticResource MutedColor}"/>
 
@@ -74,6 +76,34 @@
             <Setter Property="Background" Value="#292F66"/>
         </Style>
 
+        <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+            <Setter Property="Background" Value="{StaticResource DangerBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="10"
+                                Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#E54863"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#A92F47"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="NavButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
             <Setter Property="Padding" Value="16,12"/>
@@ -112,6 +142,144 @@
             <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Margin" Value="0,7"/>
+        </Style>
+
+        <Style x:Key="VerticalScrollBarThumb" TargetType="{x:Type Thumb}">
+            <Setter Property="Background" Value="#4657A7"/>
+            <Setter Property="MinHeight" Value="34"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Thumb}">
+                        <Border x:Name="ThumbRoot"
+                                Margin="2"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="5"
+                                SnapsToDevicePixels="True"/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ThumbRoot" Property="Background" Value="#6076E8"/>
+                            </Trigger>
+                            <Trigger Property="IsDragging" Value="True">
+                                <Setter TargetName="ThumbRoot" Property="Background" Value="#7890FF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="HorizontalScrollBarThumb" TargetType="{x:Type Thumb}">
+            <Setter Property="Background" Value="#4657A7"/>
+            <Setter Property="MinWidth" Value="34"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Thumb}">
+                        <Border x:Name="ThumbRoot"
+                                Margin="2"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="5"
+                                SnapsToDevicePixels="True"/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ThumbRoot" Property="Background" Value="#6076E8"/>
+                            </Trigger>
+                            <Trigger Property="IsDragging" Value="True">
+                                <Setter TargetName="ThumbRoot" Property="Background" Value="#7890FF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="{x:Type ScrollBar}">
+            <Setter Property="Width" Value="12"/>
+            <Setter Property="Background" Value="#121735"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ScrollBar}">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" SnapsToDevicePixels="True">
+                            <Track x:Name="PART_Track"
+                                   Focusable="False"
+                                   IsDirectionReversed="True"
+                                   Orientation="Vertical">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}"
+                                                  CommandTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}"
+                                                  Focusable="False">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="{x:Type RepeatButton}">
+                                                <Border Background="Transparent"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Style="{StaticResource VerticalScrollBarThumb}"/>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static ScrollBar.PageDownCommand}"
+                                                  CommandTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}"
+                                                  Focusable="False">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="{x:Type RepeatButton}">
+                                                <Border Background="Transparent"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="Width" Value="Auto"/>
+                    <Setter Property="Height" Value="12"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type ScrollBar}">
+                                <Border Background="{TemplateBinding Background}" CornerRadius="6" SnapsToDevicePixels="True">
+                                    <Track x:Name="PART_Track"
+                                           Focusable="False"
+                                           IsDirectionReversed="False"
+                                           Orientation="Horizontal">
+                                        <Track.DecreaseRepeatButton>
+                                            <RepeatButton Command="{x:Static ScrollBar.PageLeftCommand}"
+                                                          CommandTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}"
+                                                          Focusable="False">
+                                                <RepeatButton.Template>
+                                                    <ControlTemplate TargetType="{x:Type RepeatButton}">
+                                                        <Border Background="Transparent"/>
+                                                    </ControlTemplate>
+                                                </RepeatButton.Template>
+                                            </RepeatButton>
+                                        </Track.DecreaseRepeatButton>
+                                        <Track.Thumb>
+                                            <Thumb Style="{StaticResource HorizontalScrollBarThumb}"/>
+                                        </Track.Thumb>
+                                        <Track.IncreaseRepeatButton>
+                                            <RepeatButton Command="{x:Static ScrollBar.PageRightCommand}"
+                                                          CommandTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}"
+                                                          Focusable="False">
+                                                <RepeatButton.Template>
+                                                    <ControlTemplate TargetType="{x:Type RepeatButton}">
+                                                        <Border Background="Transparent"/>
+                                                    </ControlTemplate>
+                                                </RepeatButton.Template>
+                                            </RepeatButton>
+                                        </Track.IncreaseRepeatButton>
+                                    </Track>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.35"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
         <Style TargetType="ComboBoxItem">

@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Input;
 using LarsCloud.ViewModels;
 
 namespace LarsCloud;
@@ -16,10 +17,24 @@ public partial class MainWindow : Window
 
     private void MinimizeWindow_OnClick(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
-    private void MaximizeWindow_OnClick(object sender, RoutedEventArgs e) =>
-        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+    private void MaximizeWindow_OnClick(object sender, RoutedEventArgs e) => ToggleMaximizeState();
 
     private void CloseWindow_OnClick(object sender, RoutedEventArgs e) => Close();
+
+    private void TitleBarDragArea_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ClickCount == 2)
+        {
+            ToggleMaximizeState();
+            return;
+        }
+
+        if (e.LeftButton == MouseButtonState.Pressed && WindowState == WindowState.Normal)
+            DragMove();
+    }
+
+    private void ToggleMaximizeState() =>
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
 
     private void Window_OnStateChanged(object? sender, EventArgs e)
     {
