@@ -1,13 +1,13 @@
 # Lar’s Cloud
 
-Lar’s Cloud — Windows 10/11 програма для автоматичного резервного копіювання вибраної локальної папки безпосередньо на Google Drive. Застосунок написаний на C# / .NET 8 / WPF, працює у системному треї, зберігає стан у SQLite та завантажує лише нові або змінені файли.
+Lar’s Cloud — Windows 10/11 програма для автоматичного резервного копіювання до 10 вибраних локальних папок безпосередньо на Google Drive. Застосунок написаний на C# / .NET 8 / WPF, працює у системному треї, зберігає стан у SQLite та завантажує лише нові або змінені файли.
 
 ## Що вже реалізовано
 
 - вхід і повторний вхід через офіційний Google OAuth 2.0 для Desktop app із PKCE та loopback redirect;
 - шифрування OAuth-токена через Windows DPAPI для поточного користувача;
 - пряме завантаження на Google Drive без стороннього сервера;
-- папки `Lar's Cloud / НАЗВА_КОМП'ЮТЕРА`;
+- окремі папки `Lar's Cloud / НАЗВА_КОМП'ЮТЕРА / НАЗВА_ЛОКАЛЬНОЇ_ПАПКИ` для кожного джерела;
 - збереження структури всіх вкладених папок;
 - порівняння шляху, розміру, часу зміни й SHA-256 через локальну SQLite-базу;
 - resumable upload частинами по 8 МБ для великих файлів;
@@ -65,7 +65,7 @@ artifacts\installer\LarsCloud_Setup.exe.sha256
 
 ## Автоматичне збирання через GitHub
 
-У репозиторії вже є `.github/workflows/release.yml`. Додайте секрет `GOOGLE_CLIENT_ID`, створіть тег `v1.0.0` і відправте його на GitHub. Windows runner протестує програму, збере Installer, порахує SHA-256 і створить GitHub Release. Покроково: [docs/GITHUB_RELEASES.md](docs/GITHUB_RELEASES.md).
+У репозиторії вже є `.github/workflows/release.yml`. Додайте секрет `GOOGLE_CLIENT_ID`, створіть тег `v1.1.0` і відправте його на GitHub. Windows runner протестує програму, збере Installer, порахує SHA-256 і створить GitHub Release. Покроково: [docs/GITHUB_RELEASES.md](docs/GITHUB_RELEASES.md).
 
 ## Дані на комп’ютері користувача
 

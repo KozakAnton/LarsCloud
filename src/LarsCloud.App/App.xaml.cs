@@ -51,7 +51,7 @@ public partial class App : System.Windows.Application
             var settings = new SettingsService();
             await settings.LoadAsync();
             var database = new StateDatabase();
-            await database.InitializeAsync();
+            await database.InitializeAsync(settings.Current.SyncFolders.FirstOrDefault()?.Id);
             var vault = new TokenVault();
             var oauth = new GoogleOAuthService(configuration, vault, _httpClient, log);
             await oauth.RestoreSessionAsync();

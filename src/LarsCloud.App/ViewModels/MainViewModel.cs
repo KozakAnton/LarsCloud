@@ -32,7 +32,7 @@ public sealed class MainViewModel : ObservableObject
     private string _accountDisplay = "Google Drive не підключено";
     private string _statusText = "Перевірка стану…";
     private MediaBrush _statusBrush = new SolidColorBrush(MediaColor.FromRgb(89, 108, 154));
-    private string _localFolder = "Папку ще не вибрано";
+    private string _localFolder = "Папки ще не вибрано";
     private string _lastSync = "Ще не виконувалась";
     private string _nextSync = "Не заплановано";
     private string _driveUsage = "Немає даних";
@@ -69,12 +69,20 @@ public sealed class MainViewModel : ObservableObject
 
         SignInCommand = new AsyncCommand(SignInAsync, () => !IsSyncing);
         SignOutCommand = new AsyncCommand(SignOutAsync, () => !IsSyncing);
-        SelectFolderCommand = new AsyncCommand(SelectFolderAsync, () => !IsSyncing);
-        CreateDesktopFolderCommand = new AsyncCommand(CreateDesktopFolderAsync, () => !IsSyncing);
-        AnalyzeFolderCommand = new AsyncCommand(AnalyzeFolderAsync, () => Directory.Exists(_settings.Current.LocalFolder));
-        SyncNowCommand = new AsyncCommand(SyncNowAsync, () => !IsSyncing);
+        AddFolderCommand = new AsyncCommand(AddFolderAsync,
+            () => !IsSyncing && _settings.Current.SyncFolders.Count < AppSettings.MaximumSyncFolders);
+        SelectFolderCommand = AddFolderCommand;
+        CreateDesktopFolderCommand = new AsyncCommand(CreateDesktopFolderAsync,
+            () => !IsSyncing && _settings.Current.SyncFolders.Count < AppSettings.MaximumSyncFolders);
+        AnalyzeFolderCommand = new AsyncCommand(AnalyzeFolderAsync,
+            () => _settings.Current.SyncFolders.Count > 0
+                  && _settings.Current.SyncFolders.All(folder => Directory.Exists(folder.Path)));
+        SyncNowCommand = new AsyncCommand(SyncNowAsync,
+            () => !IsSyncing && _settings.Current.SyncFolders.Count > 0);
         CancelSyncCommand = new RelayCommand(() => _sync.CancelCurrent(), () => IsSyncing);
         OpenLocalFolderCommand = new RelayCommand(OpenLocalFolder);
+        OpenSyncFolderCommand = new RelayCommand<SyncFolderRow>(OpenSyncFolder);
+        RemoveSyncFolderCommand = new AsyncCommand<SyncFolderRow>(RemoveSyncFolderAsync, _ => !IsSyncing);
         OpenDriveCommand = new RelayCommand(OpenDriveFolder);
         ShowDashboardCommand = new RelayCommand(() => SelectedPage = 0);
         ShowHistoryCommand = new RelayCommand(() => SelectedPage = 1);
@@ -100,12 +108,15 @@ public sealed class MainViewModel : ObservableObject
 
     public ICommand SignInCommand { get; }
     public ICommand SignOutCommand { get; }
+    public ICommand AddFolderCommand { get; }
     public ICommand SelectFolderCommand { get; }
     public ICommand CreateDesktopFolderCommand { get; }
     public ICommand AnalyzeFolderCommand { get; }
     public ICommand SyncNowCommand { get; }
     public ICommand CancelSyncCommand { get; }
     public ICommand OpenLocalFolderCommand { get; }
+    public ICommand OpenSyncFolderCommand { get; }
+    public ICommand RemoveSyncFolderCommand { get; }
     public ICommand OpenDriveCommand { get; }
     public ICommand ShowDashboardCommand { get; }
     public ICommand ShowHistoryCommand { get; }
@@ -121,6 +132,7 @@ public sealed class MainViewModel : ObservableObject
 
     public IReadOnlyList<int> SyncIntervals { get; } = Enumerable.Range(1, 7).ToArray();
     public ObservableCollection<HistoryRow> History { get; } = new();
+    public ObservableCollection<SyncFolderRow> SyncFolders { get; } = new();
 
     public bool IsAuthenticated { get => _isAuthenticated; private set { if (SetProperty(ref _isAuthenticated, value)) OnPropertyChanged(nameof(IsNotAuthenticated)); } }
     public bool IsNotAuthenticated => !IsAuthenticated;
@@ -150,8 +162,10 @@ public sealed class MainViewModel : ObservableObject
             (CancelSyncCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (SignInCommand as AsyncCommand)?.RaiseCanExecuteChanged();
             (SignOutCommand as AsyncCommand)?.RaiseCanExecuteChanged();
-            (SelectFolderCommand as AsyncCommand)?.RaiseCanExecuteChanged();
+            (AddFolderCommand as AsyncCommand)?.RaiseCanExecuteChanged();
             (CreateDesktopFolderCommand as AsyncCommand)?.RaiseCanExecuteChanged();
+            (AnalyzeFolderCommand as AsyncCommand)?.RaiseCanExecuteChanged();
+            (RemoveSyncFolderCommand as AsyncCommand<SyncFolderRow>)?.RaiseCanExecuteChanged();
             (ClearServiceDataCommand as AsyncCommand)?.RaiseCanExecuteChanged();
         }
     }
@@ -159,6 +173,7 @@ public sealed class MainViewModel : ObservableObject
     public string StatusText { get => _statusText; private set => SetProperty(ref _statusText, value); }
     public MediaBrush StatusBrush { get => _statusBrush; private set => SetProperty(ref _statusBrush, value); }
     public string LocalFolder { get => _localFolder; private set => SetProperty(ref _localFolder, value); }
+    public string FolderCountText => $"Додано {SyncFolders.Count} із {AppSettings.MaximumSyncFolders} папок";
     public string LastSync { get => _lastSync; private set => SetProperty(ref _lastSync, value); }
     public string NextSync { get => _nextSync; private set => SetProperty(ref _nextSync, value); }
     public string DriveUsage { get => _driveUsage; private set => SetProperty(ref _driveUsage, value); }
@@ -249,7 +264,7 @@ public sealed class MainViewModel : ObservableObject
     public async Task InitializeAsync()
     {
         RefreshIdentity();
-        LocalFolder = string.IsNullOrWhiteSpace(_settings.Current.LocalFolder) ? "Папку ще не вибрано" : _settings.Current.LocalFolder;
+        RefreshSyncFolders();
         RefreshDates();
         OnPropertyChanged(nameof(SyncIntervalDays));
         OnPropertyChanged(nameof(AutoStart));
@@ -260,7 +275,9 @@ public sealed class MainViewModel : ObservableObject
         await RefreshConnectionAsync();
         var automaticRunIsDue = _oauth.IsAuthenticated && !_settings.Current.SyncPaused
                                 && (_settings.Current.NextSyncUtc ?? DateTimeOffset.UtcNow) <= DateTimeOffset.UtcNow;
-        if (Directory.Exists(_settings.Current.LocalFolder) && !automaticRunIsDue)
+        if (_settings.Current.SyncFolders.Count > 0
+            && _settings.Current.SyncFolders.All(folder => Directory.Exists(folder.Path))
+            && !automaticRunIsDue)
             await AnalyzeFolderAsync(silent: true);
     }
 
@@ -318,17 +335,24 @@ public sealed class MainViewModel : ObservableObject
         DriveUsagePercent = 0;
     }
 
-    private async Task SelectFolderAsync()
+    private async Task AddFolderAsync()
     {
+        if (_settings.Current.SyncFolders.Count >= AppSettings.MaximumSyncFolders)
+        {
+            MessageBox.Show($"Можна додати не більше {AppSettings.MaximumSyncFolders} папок.", "Lar’s Cloud",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
         using var dialog = new Forms.FolderBrowserDialog
         {
-            Description = "Виберіть папку для резервного копіювання",
+            Description = "Додайте папку для резервного копіювання",
             UseDescriptionForTitle = true,
             ShowNewFolderButton = true,
-            SelectedPath = Directory.Exists(_settings.Current.LocalFolder) ? _settings.Current.LocalFolder : ""
+            SelectedPath = _settings.Current.SyncFolders.LastOrDefault(folder => Directory.Exists(folder.Path))?.Path ?? ""
         };
         if (dialog.ShowDialog() != Forms.DialogResult.OK) return;
-        await SetFolderAsync(dialog.SelectedPath);
+        await AddSyncFolderAsync(dialog.SelectedPath);
     }
 
     private async Task CreateDesktopFolderAsync()
@@ -336,21 +360,66 @@ public sealed class MainViewModel : ObservableObject
         var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
         var folder = Path.Combine(desktop, "Lar's Cloud");
         Directory.CreateDirectory(folder);
-        await SetFolderAsync(folder);
+        await AddSyncFolderAsync(folder);
         ProcessLauncher.Open(folder);
     }
 
-    private async Task SetFolderAsync(string folder)
+    private async Task AddSyncFolderAsync(string folder)
     {
         var normalized = Path.GetFullPath(folder);
-        if (!string.Equals(_settings.Current.LocalFolder, normalized, StringComparison.OrdinalIgnoreCase))
-            await _database.ClearFileStateAsync();
-        _settings.Current.LocalFolder = normalized;
+        if (_settings.Current.SyncFolders.Any(existing =>
+                string.Equals(existing.Path, normalized, StringComparison.OrdinalIgnoreCase)))
+        {
+            MessageBox.Show("Цю папку вже додано.", "Lar’s Cloud", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        if (_settings.Current.SyncFolders.Count >= AppSettings.MaximumSyncFolders)
+        {
+            MessageBox.Show($"Можна додати не більше {AppSettings.MaximumSyncFolders} папок.", "Lar’s Cloud",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var folderName = SyncFolderSettings.GetFolderName(normalized);
+        if (_settings.Current.SyncFolders.Any(existing =>
+                string.Equals(existing.Name, folderName, StringComparison.OrdinalIgnoreCase)))
+        {
+            MessageBox.Show($"Папку з назвою «{folderName}» вже додано. Назви мають бути різними, щоб резервні копії не змішувалися на Google Drive.",
+                "Lar’s Cloud", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        if (_settings.Current.SyncFolders.Any(existing => PathsOverlap(existing.Path, normalized)))
+        {
+            MessageBox.Show("Не можна одночасно додати вкладену папку та її батьківську папку — ті самі файли копіювалися б двічі.",
+                "Lar’s Cloud", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        _settings.Current.SyncFolders.Add(SyncFolderSettings.Create(normalized));
         _settings.Current.NextSyncUtc = DateTimeOffset.UtcNow;
         await _settings.SaveAsync();
-        LocalFolder = _settings.Current.LocalFolder;
+        RefreshSyncFolders();
         RefreshDates();
         await AnalyzeFolderAsync();
+    }
+
+    private async Task RemoveSyncFolderAsync(SyncFolderRow row)
+    {
+        if (MessageBox.Show($"Прибрати папку «{row.Name}» зі списку резервного копіювання?\n\nЛокальні файли й уже завантажені файли на Google Drive залишаться без змін.",
+                "Lar’s Cloud", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+
+        var folder = _settings.Current.SyncFolders.FirstOrDefault(item =>
+            string.Equals(item.Id, row.Id, StringComparison.OrdinalIgnoreCase));
+        if (folder is null) return;
+        _settings.Current.SyncFolders.Remove(folder);
+        await _database.RemoveFolderFilesAsync(folder.Id);
+        _settings.Current.NextSyncUtc = _settings.Current.SyncFolders.Count > 0 ? DateTimeOffset.UtcNow : null;
+        await _settings.SaveAsync();
+        RefreshSyncFolders();
+        RefreshDates();
+
+        if (_settings.Current.SyncFolders.Count > 0) await AnalyzeFolderAsync(silent: true);
+        else ResetLocalAnalysis();
     }
 
     private async Task AnalyzeFolderAsync() => await AnalyzeFolderAsync(silent: false);
@@ -385,7 +454,9 @@ public sealed class MainViewModel : ObservableObject
         finally { IsSyncing = false; }
         await RefreshConnectionAsync();
         await RefreshHistoryAsync();
-        if (Directory.Exists(_settings.Current.LocalFolder)) await AnalyzeFolderAsync(silent: true);
+        if (_settings.Current.SyncFolders.Count > 0
+            && _settings.Current.SyncFolders.All(folder => Directory.Exists(folder.Path)))
+            await AnalyzeFolderAsync(silent: true);
     }
 
     private async Task RefreshConnectionAsync()
@@ -504,8 +575,17 @@ public sealed class MainViewModel : ObservableObject
 
     private void OpenLocalFolder()
     {
-        if (Directory.Exists(_settings.Current.LocalFolder)) ProcessLauncher.Open(_settings.Current.LocalFolder);
-        else MessageBox.Show("Вибрана папка не існує.", "Lar’s Cloud", MessageBoxButton.OK, MessageBoxImage.Warning);
+        var first = _settings.Current.SyncFolders.FirstOrDefault(folder => Directory.Exists(folder.Path));
+        if (first is not null) ProcessLauncher.Open(first.Path);
+        else MessageBox.Show("Додані папки не знайдено або вони зараз недоступні.", "Lar’s Cloud",
+            MessageBoxButton.OK, MessageBoxImage.Warning);
+    }
+
+    private static void OpenSyncFolder(SyncFolderRow row)
+    {
+        if (Directory.Exists(row.Path)) ProcessLauncher.Open(row.Path);
+        else MessageBox.Show($"Папка «{row.Name}» не існує або зараз недоступна.", "Lar’s Cloud",
+            MessageBoxButton.OK, MessageBoxImage.Warning);
     }
 
     private void OpenDriveFolder()
@@ -533,6 +613,43 @@ public sealed class MainViewModel : ObservableObject
         LastSync = Formatters.DateTimeLocal(_settings.Current.LastSyncUtc);
         NextSync = _settings.Current.SyncPaused ? "Призупинено" : _settings.Current.NextSyncUtc is null
             ? "Після першої синхронізації" : Formatters.DateTimeLocal(_settings.Current.NextSyncUtc);
+    }
+
+    private void RefreshSyncFolders()
+    {
+        SyncFolders.Clear();
+        foreach (var folder in _settings.Current.SyncFolders)
+            SyncFolders.Add(new SyncFolderRow(folder.Id, folder.Name, folder.Path));
+
+        LocalFolder = SyncFolders.Count switch
+        {
+            0 => "Папки ще не вибрано",
+            1 => SyncFolders[0].Path,
+            _ => $"{SyncFolders.Count} папок для резервного копіювання"
+        };
+        OnPropertyChanged(nameof(FolderCountText));
+        (AddFolderCommand as AsyncCommand)?.RaiseCanExecuteChanged();
+        (CreateDesktopFolderCommand as AsyncCommand)?.RaiseCanExecuteChanged();
+        (AnalyzeFolderCommand as AsyncCommand)?.RaiseCanExecuteChanged();
+        (SyncNowCommand as AsyncCommand)?.RaiseCanExecuteChanged();
+    }
+
+    private void ResetLocalAnalysis()
+    {
+        LocalFileCount = "0";
+        LocalFolderSize = "0 Б";
+        ChangedFileCount = "0";
+        PendingUploadSize = "0 Б";
+        SyncProgressText = "Додайте папку для резервного копіювання";
+    }
+
+    private static bool PathsOverlap(string first, string second)
+    {
+        var a = Path.GetFullPath(first).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var b = Path.GetFullPath(second).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        if (string.Equals(a, b, StringComparison.OrdinalIgnoreCase)) return true;
+        return a.StartsWith(b + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+               || b.StartsWith(a + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
     }
 
     private void SyncOnProgressChanged(object? sender, SyncProgress progress) => OnUi(() =>
@@ -597,4 +714,5 @@ public sealed class MainViewModel : ObservableObject
 }
 
 public sealed record HistoryRow(string Date, string Status, int Files, string Size, string Error, MediaBrush StatusBrush);
+public sealed record SyncFolderRow(string Id, string Name, string Path);
 public sealed record UserNotification(string Title, string Message, bool IsError);

@@ -19,7 +19,7 @@ dotnet --info
 
 ```powershell
 .\scripts\build-installer.ps1 `
-  -Version "1.0.0" `
+  -Version "1.1.0" `
   -GoogleClientId "ВАШ_ID.apps.googleusercontent.com" `
   -GitHubOwner "ВАШ_LOGIN" `
   -GitHubRepository "LarsCloud"

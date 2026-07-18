@@ -185,7 +185,7 @@
                             <Button Content="◷  Історія копій" Command="{Binding ShowHistoryCommand}" Style="{StaticResource NavButton}" Tag="{Binding IsHistoryPage}"/>
                             <Button Content="⚙  Налаштування" Command="{Binding ShowSettingsCommand}" Style="{StaticResource NavButton}" Tag="{Binding IsSettingsPage}"/>
                             <Button Content="↻  Синхронізувати" Command="{Binding SyncNowCommand}" Style="{StaticResource NavButton}" Margin="0,16,0,3"/>
-                            <Button Content="▣  Локальна папка" Command="{Binding OpenLocalFolderCommand}" Style="{StaticResource NavButton}"/>
+                            <Button Content="▣  Локальні папки" Command="{Binding OpenLocalFolderCommand}" Style="{StaticResource NavButton}"/>
                             <Button Content="☁  Google Drive" Command="{Binding OpenDriveCommand}" Style="{StaticResource NavButton}"/>
                         </StackPanel>
                         <StackPanel Grid.Row="2">
@@ -254,17 +254,37 @@
                         </Border>
 
                         <Border Style="{StaticResource Card}" Margin="0,0,0,18">
-                            <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                <StackPanel>
-                                    <TextBlock Text="Локальна папка" Style="{StaticResource SectionTitle}"/>
-                                    <TextBlock Text="{Binding LocalFolder}" FontSize="15" TextTrimming="CharacterEllipsis" ToolTip="{Binding LocalFolder}"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Button Content="Відкрити" Command="{Binding OpenLocalFolderCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,10,0"/>
-                                    <Button Content="Змінити папку" Command="{Binding SelectFolderCommand}" Style="{StaticResource PrimaryButton}"/>
-                                </StackPanel>
-                            </Grid>
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Локальні папки" Style="{StaticResource SectionTitle}"/>
+                                        <TextBlock Text="{Binding FolderCountText}" Style="{StaticResource Muted}" Margin="0,-8,0,0"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Content="Додати ще одну папку" Command="{Binding AddFolderCommand}"
+                                            Style="{StaticResource SuccessButton}" VerticalAlignment="Center"/>
+                                </Grid>
+                                <ItemsControl ItemsSource="{Binding SyncFolders}" Margin="0,14,0,0">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#65101836" BorderBrush="#292E5DFC" BorderThickness="1"
+                                                    CornerRadius="10" Padding="13,10" Margin="0,0,0,8">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                    <StackPanel>
+                                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="15"/>
+                                                        <TextBlock Text="{Binding Path}" Style="{StaticResource Muted}" Margin="0,3,12,0"
+                                                                   TextTrimming="CharacterEllipsis" ToolTip="{Binding Path}"/>
+                                                    </StackPanel>
+                                                    <Button Grid.Column="1" Content="Відкрити"
+                                                            Command="{Binding DataContext.OpenSyncFolderCommand, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
+                                                            CommandParameter="{Binding}" Style="{StaticResource SecondaryButton}" Padding="14,7"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
                         </Border>
 
                         <Grid Margin="0,0,0,18">
@@ -288,7 +308,7 @@
                                     </Grid>
                                     <Grid Margin="0,9,0,0">
                                         <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
-                                        <StackPanel><TextBlock Text="Розмір папки" Style="{StaticResource Muted}"/><TextBlock Text="{Binding LocalFolderSize}" Style="{StaticResource MetricValue}"/></StackPanel>
+                                        <StackPanel><TextBlock Text="Розмір папок" Style="{StaticResource Muted}"/><TextBlock Text="{Binding LocalFolderSize}" Style="{StaticResource MetricValue}"/></StackPanel>
                                         <StackPanel Grid.Column="1"><TextBlock Text="Усього файлів" Style="{StaticResource Muted}"/><TextBlock Text="{Binding LocalFileCount}" Style="{StaticResource MetricValue}"/></StackPanel>
                                     </Grid>
                                     <Grid Margin="0,20,0,0">
@@ -382,12 +402,47 @@
                         <TextBlock Text="Налаштування" FontSize="30" FontWeight="Bold" Margin="0,0,0,22"/>
                         <Border Style="{StaticResource Card}" Margin="0,0,0,18">
                             <StackPanel>
-                                <TextBlock Text="Локальна папка" Style="{StaticResource SectionTitle}"/>
-                                <TextBlock Text="{Binding LocalFolder}" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,0,0,14"/>
-                                <StackPanel Orientation="Horizontal">
-                                    <Button Content="Вибрати іншу папку" Command="{Binding SelectFolderCommand}" Style="{StaticResource PrimaryButton}" Margin="0,0,10,0"/>
-                                    <Button Content="Створити папку Lar’s Cloud на робочому столі" Command="{Binding CreateDesktopFolderCommand}" Style="{StaticResource SecondaryButton}"/>
-                                </StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Папки для резервного копіювання" Style="{StaticResource SectionTitle}"/>
+                                        <TextBlock Text="{Binding FolderCountText}" Style="{StaticResource Muted}" Margin="0,-8,0,0"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Content="Додати ще одну папку" Command="{Binding AddFolderCommand}"
+                                            Style="{StaticResource SuccessButton}" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <ItemsControl ItemsSource="{Binding SyncFolders}" Margin="0,15,0,6">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#65101836" BorderBrush="#292E5DFC" BorderThickness="1"
+                                                    CornerRadius="11" Padding="14,11" Margin="0,0,0,9">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold"/>
+                                                        <TextBlock Text="{Binding Path}" Style="{StaticResource Muted}" Margin="0,3,14,0"
+                                                                   TextTrimming="CharacterEllipsis" ToolTip="{Binding Path}"/>
+                                                    </StackPanel>
+                                                    <Button Grid.Column="1" Content="Відкрити" Margin="0,0,9,0" Padding="14,7"
+                                                            Command="{Binding DataContext.OpenSyncFolderCommand, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
+                                                            CommandParameter="{Binding}" Style="{StaticResource SecondaryButton}"/>
+                                                    <Button Grid.Column="2" Content="Прибрати" Padding="14,7"
+                                                            Command="{Binding DataContext.RemoveSyncFolderCommand, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
+                                                            CommandParameter="{Binding}" Style="{StaticResource DangerButton}"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Text="Кожна папка зберігається на Google Drive окремо під своєю назвою. Максимум — 10 папок."
+                                           Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,13"/>
+                                <Button Content="Створити папку Lar’s Cloud на робочому столі" Command="{Binding CreateDesktopFolderCommand}"
+                                        Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left"/>
                             </StackPanel>
                         </Border>
 

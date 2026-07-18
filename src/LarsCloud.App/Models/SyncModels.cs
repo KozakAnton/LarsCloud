@@ -1,6 +1,7 @@
 namespace LarsCloud.Models;
 
 public sealed record FileState(
+    string SyncFolderId,
     string RelativePath,
     long Size,
     long LastWriteUtcTicks,
@@ -10,6 +11,8 @@ public sealed record FileState(
     DateTimeOffset LastSyncedUtc);
 
 public sealed record LocalFileCandidate(
+    string SyncFolderId,
+    string SyncFolderName,
     string FullPath,
     string RelativePath,
     long Size,
@@ -22,7 +25,13 @@ public sealed record ScanResult(
     int TotalFiles,
     long UploadBytes,
     IReadOnlyList<LocalFileCandidate> ChangedFiles,
-    IReadOnlySet<string> CurrentRelativePaths);
+    IReadOnlySet<string> CurrentFileKeys);
+
+public static class SyncFileKey
+{
+    public static string Create(string syncFolderId, string relativePath) =>
+        $"{syncFolderId}|{relativePath.Replace('\\', '/')}";
+}
 
 public enum SyncRunStatus { Running, Success, Failed, Cancelled }
 

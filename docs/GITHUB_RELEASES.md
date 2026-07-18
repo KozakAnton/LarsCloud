@@ -14,10 +14,10 @@ Workflow уже має `permissions: contents: write`, тому `GITHUB_TOKEN` �
 
 ```bash
 git add .
-git commit -m "Lar's Cloud 1.0.0"
+git commit -m "Lar's Cloud 1.1.0"
 git push origin main
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.1.0
+git push origin v1.1.0
 ```
 
 GitHub Actions на `windows-latest`:

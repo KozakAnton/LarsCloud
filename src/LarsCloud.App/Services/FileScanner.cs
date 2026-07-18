@@ -9,18 +9,23 @@ public sealed class FileScanner
 
     public FileScanner(StateDatabase database) => _database = database;
 
-    public Task<ScanResult> ScanAsync(string rootFolder, IProgress<(int Files, long Bytes)>? progress = null,
+    public Task<ScanResult> ScanAsync(IReadOnlyList<SyncFolderSettings> syncFolders,
+        IProgress<(int Files, long Bytes)>? progress = null,
         CancellationToken cancellationToken = default) =>
-        Task.Run(() => ScanCoreAsync(rootFolder, progress, cancellationToken), cancellationToken);
+        Task.Run(() => ScanCoreAsync(syncFolders, progress, cancellationToken), cancellationToken);
 
-    private async Task<ScanResult> ScanCoreAsync(string rootFolder, IProgress<(int Files, long Bytes)>? progress,
+    private async Task<ScanResult> ScanCoreAsync(IReadOnlyList<SyncFolderSettings> syncFolders,
+        IProgress<(int Files, long Bytes)>? progress,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(rootFolder) || !Directory.Exists(rootFolder))
-            throw new DirectoryNotFoundException("Вибрана папка не існує.");
+        if (syncFolders.Count == 0)
+            throw new DirectoryNotFoundException("Додайте хоча б одну папку для резервного копіювання.");
+        var missing = syncFolders.FirstOrDefault(folder => !Directory.Exists(folder.Path));
+        if (missing is not null)
+            throw new DirectoryNotFoundException($"Папка «{missing.Name}» не існує або зараз недоступна.");
 
         var previous = (await _database.GetAllFilesAsync(cancellationToken))
-            .ToDictionary(x => x.RelativePath, StringComparer.OrdinalIgnoreCase);
+            .ToDictionary(x => SyncFileKey.Create(x.SyncFolderId, x.RelativePath), StringComparer.OrdinalIgnoreCase);
         var changed = new List<LocalFileCandidate>();
         var current = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         long totalBytes = 0;
@@ -34,27 +39,31 @@ public sealed class FileScanner
             AttributesToSkip = FileAttributes.ReparsePoint
         };
 
-        foreach (var fullPath in Directory.EnumerateFiles(rootFolder, "*", options))
+        foreach (var syncFolder in syncFolders)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            FileInfo info;
-            try { info = new FileInfo(fullPath); }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { continue; }
-
-            var relativePath = Path.GetRelativePath(rootFolder, fullPath).Replace('\\', '/');
-            current.Add(relativePath);
-            totalFiles++;
-            totalBytes += info.Length;
-
-            previous.TryGetValue(relativePath, out var state);
-            if (state is null || !string.Equals(state.RelativePath, relativePath, StringComparison.Ordinal)
-                || state.Size != info.Length || state.LastWriteUtcTicks != info.LastWriteTimeUtc.Ticks)
+            foreach (var fullPath in Directory.EnumerateFiles(syncFolder.Path, "*", options))
             {
-                var hash = await ComputeSha256Async(fullPath, cancellationToken);
-                changed.Add(new LocalFileCandidate(fullPath, relativePath, info.Length,
-                    info.LastWriteTimeUtc.Ticks, hash, state));
+                cancellationToken.ThrowIfCancellationRequested();
+                FileInfo info;
+                try { info = new FileInfo(fullPath); }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { continue; }
+
+                var relativePath = Path.GetRelativePath(syncFolder.Path, fullPath).Replace('\\', '/');
+                var stateKey = SyncFileKey.Create(syncFolder.Id, relativePath);
+                current.Add(stateKey);
+                totalFiles++;
+                totalBytes += info.Length;
+
+                previous.TryGetValue(stateKey, out var state);
+                if (state is null || !string.Equals(state.RelativePath, relativePath, StringComparison.Ordinal)
+                    || state.Size != info.Length || state.LastWriteUtcTicks != info.LastWriteTimeUtc.Ticks)
+                {
+                    var hash = await ComputeSha256Async(fullPath, cancellationToken);
+                    changed.Add(new LocalFileCandidate(syncFolder.Id, syncFolder.Name, fullPath, relativePath,
+                        info.Length, info.LastWriteTimeUtc.Ticks, hash, state));
+                }
+                if (totalFiles % 50 == 0) progress?.Report((totalFiles, totalBytes));
             }
-            if (totalFiles % 50 == 0) progress?.Report((totalFiles, totalBytes));
         }
 
         progress?.Report((totalFiles, totalBytes));

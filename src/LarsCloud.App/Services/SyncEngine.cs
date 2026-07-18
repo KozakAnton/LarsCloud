@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net;
 using LarsCloud.Infrastructure;
 using LarsCloud.Models;
 
@@ -35,7 +36,7 @@ public sealed class SyncEngine
 
     public async Task<ScanResult> AnalyzeAsync(IProgress<(int Files, long Bytes)>? progress = null,
         CancellationToken cancellationToken = default) =>
-        await _scanner.ScanAsync(_settings.Current.LocalFolder, progress, cancellationToken);
+        await _scanner.ScanAsync(_settings.Current.SyncFolders, progress, cancellationToken);
 
     public async Task<SyncResult> RunAsync(bool manual, CancellationToken cancellationToken = default)
     {
@@ -54,25 +55,31 @@ public sealed class SyncEngine
         {
             var settings = _settings.Current;
             if (settings.SyncPaused && !manual) throw new SyncPausedException("Автоматичну синхронізацію призупинено.");
-            if (string.IsNullOrWhiteSpace(settings.LocalFolder) || !Directory.Exists(settings.LocalFolder))
-                throw new DirectoryNotFoundException("Вибрана папка не існує. Виберіть нову папку в налаштуваннях.");
+            if (settings.SyncFolders.Count == 0)
+                throw new DirectoryNotFoundException("Додайте хоча б одну папку для резервного копіювання.");
+            var missingFolder = settings.SyncFolders.FirstOrDefault(folder => !Directory.Exists(folder.Path));
+            if (missingFolder is not null)
+                throw new DirectoryNotFoundException($"Папка «{missingFolder.Name}» не існує або зараз недоступна.");
             if (!await _connectivity.IsOnlineAsync(token))
                 throw new NetworkUnavailableException("Немає підключення до інтернету.");
             if (!_oauth.IsAuthenticated)
                 throw new ReauthenticationRequiredException("Google Drive не підключений.");
 
-            Report(new SyncProgress(SyncRunStatus.Running, "Аналіз локальної папки…", "", 0, 0, 0, 0, 0, null));
-            var scan = await _scanner.ScanAsync(settings.LocalFolder, null, token);
-            AnalysisCompleted?.Invoke(this, scan);
             var about = await _drive.GetAboutAsync(token);
-            if (about.Quota.Remaining is long remaining && scan.UploadBytes > remaining)
-                throw new DriveApiException($"Недостатньо місця на Google Drive. Потрібно {Formatters.Bytes(scan.UploadBytes)}, доступно {Formatters.Bytes(remaining)}.");
-
             var folders = await _drive.EnsureBackupFoldersAsync(token);
             settings.GoogleRootFolderId = folders.Root.Id;
             settings.GoogleDeviceFolderId = folders.Device.Id;
             settings.GoogleDriveWebUrl = folders.Device.WebUrl;
             await _settings.SaveAsync(token);
+
+            Report(new SyncProgress(SyncRunStatus.Running, "Підготовка папок на Google Drive…", "", 0, 0, 0, 0, 0, null));
+            await MigrateStoredFilesToFolderHierarchyAsync(settings.SyncFolders, folders.Device.Id, token);
+
+            Report(new SyncProgress(SyncRunStatus.Running, "Аналіз локальних папок…", "", 0, 0, 0, 0, 0, null));
+            var scan = await _scanner.ScanAsync(settings.SyncFolders, null, token);
+            AnalysisCompleted?.Invoke(this, scan);
+            if (about.Quota.Remaining is long remaining && scan.UploadBytes > remaining)
+                throw new DriveApiException($"Недостатньо місця на Google Drive. Потрібно {Formatters.Bytes(scan.UploadBytes)}, доступно {Formatters.Bytes(remaining)}.");
 
             var stopwatch = Stopwatch.StartNew();
             for (var index = 0; index < scan.ChangedFiles.Count; index++)
@@ -81,7 +88,8 @@ public sealed class SyncEngine
                 var fileIndex = index;
                 var file = scan.ChangedFiles[index];
                 var relativeDirectory = Path.GetDirectoryName(file.RelativePath)?.Replace('\\', '/') ?? "";
-                var parentId = await _drive.EnsureRelativeFolderAsync(relativeDirectory, folders.Device.Id, token);
+                var driveDirectory = BuildDriveDirectory(file.SyncFolderName, relativeDirectory);
+                var parentId = await _drive.EnsureRelativeFolderAsync(driveDirectory, folders.Device.Id, token);
                 var alreadyUploaded = uploadedBytes;
                 var perFileProgress = new Progress<FileUploadProgress>(chunk =>
                 {
@@ -89,16 +97,16 @@ public sealed class SyncEngine
                     var speed = stopwatch.Elapsed.TotalSeconds > 0 ? totalNow / stopwatch.Elapsed.TotalSeconds : 0;
                     var remainingBytes = Math.Max(0, scan.UploadBytes - totalNow);
                     var eta = speed > 1 ? TimeSpan.FromSeconds(remainingBytes / speed) : (TimeSpan?)null;
-                    Report(new SyncProgress(SyncRunStatus.Running, "Завантаження файлів…", file.RelativePath,
+                    Report(new SyncProgress(SyncRunStatus.Running, "Завантаження файлів…", DisplayPath(file),
                         fileIndex, scan.ChangedFiles.Count, totalNow, scan.UploadBytes, speed, eta));
                 });
 
                 var remote = await _drive.UploadFileAsync(file, parentId, file.PreviousState?.DriveId, perFileProgress, token);
                 uploadedFiles++;
                 uploadedBytes += file.Size;
-                await _database.UpsertFileAsync(new FileState(file.RelativePath, file.Size, file.LastWriteUtcTicks,
+                await _database.UpsertFileAsync(new FileState(file.SyncFolderId, file.RelativePath, file.Size, file.LastWriteUtcTicks,
                     file.Sha256, remote.Id, parentId, DateTimeOffset.UtcNow), token);
-                Report(new SyncProgress(SyncRunStatus.Running, "Завантаження файлів…", file.RelativePath,
+                Report(new SyncProgress(SyncRunStatus.Running, "Завантаження файлів…", DisplayPath(file),
                     index + 1, scan.ChangedFiles.Count, uploadedBytes, scan.UploadBytes,
                     stopwatch.Elapsed.TotalSeconds > 0 ? uploadedBytes / stopwatch.Elapsed.TotalSeconds : 0, null));
             }
@@ -106,11 +114,13 @@ public sealed class SyncEngine
             if (settings.DeleteRemoteWhenLocalDeleted)
             {
                 var stored = await _database.GetAllFilesAsync(token);
-                foreach (var old in stored.Where(x => !scan.CurrentRelativePaths.Contains(x.RelativePath)))
+                var activeFolderIds = settings.SyncFolders.Select(x => x.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                foreach (var old in stored.Where(x => activeFolderIds.Contains(x.SyncFolderId)
+                                                      && !scan.CurrentFileKeys.Contains(SyncFileKey.Create(x.SyncFolderId, x.RelativePath))))
                 {
                     token.ThrowIfCancellationRequested();
                     await _drive.DeleteFileAsync(old.DriveId, token);
-                    await _database.RemoveFileAsync(old.RelativePath, token);
+                    await _database.RemoveFileAsync(old.SyncFolderId, old.RelativePath, token);
                 }
             }
 
@@ -159,6 +169,44 @@ public sealed class SyncEngine
     }
 
     public void CancelCurrent() => _currentRun?.Cancel();
+
+    private async Task MigrateStoredFilesToFolderHierarchyAsync(IReadOnlyList<SyncFolderSettings> syncFolders,
+        string deviceFolderId, CancellationToken cancellationToken)
+    {
+        var byId = syncFolders.ToDictionary(x => x.Id, StringComparer.OrdinalIgnoreCase);
+        var stored = await _database.GetAllFilesAsync(cancellationToken);
+        foreach (var state in stored)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!byId.TryGetValue(state.SyncFolderId, out var syncFolder)) continue;
+            var relativeDirectory = Path.GetDirectoryName(state.RelativePath)?.Replace('\\', '/') ?? "";
+            var destinationParentId = await _drive.EnsureRelativeFolderAsync(
+                BuildDriveDirectory(syncFolder.Name, relativeDirectory), deviceFolderId, cancellationToken);
+            if (string.Equals(state.DriveParentId, destinationParentId, StringComparison.OrdinalIgnoreCase)) continue;
+
+            try
+            {
+                await _drive.MoveFileAsync(state.DriveId, destinationParentId, cancellationToken);
+                await _database.UpsertFileAsync(state with
+                {
+                    DriveParentId = destinationParentId,
+                    LastSyncedUtc = DateTimeOffset.UtcNow
+                }, cancellationToken);
+            }
+            catch (DriveApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+            {
+                // A manually removed remote file is discovered as changed by the scan that follows.
+                await _database.RemoveFileAsync(state.SyncFolderId, state.RelativePath, cancellationToken);
+            }
+        }
+    }
+
+    private static string BuildDriveDirectory(string syncFolderName, string relativeDirectory) =>
+        string.IsNullOrWhiteSpace(relativeDirectory)
+            ? syncFolderName
+            : $"{syncFolderName}/{relativeDirectory.Trim('/')}";
+
+    private static string DisplayPath(LocalFileCandidate file) => $"{file.SyncFolderName}/{file.RelativePath}";
 
     private void Report(SyncProgress progress) => ProgressChanged?.Invoke(this, progress);
 

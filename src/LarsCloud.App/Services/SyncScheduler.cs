@@ -38,7 +38,8 @@ public sealed class SyncScheduler : IAsyncDisposable
             {
                 var settings = _settings.Current;
                 var due = settings.NextSyncUtc ?? DateTimeOffset.UtcNow;
-                if (!settings.SyncPaused && _oauth.IsAuthenticated && Directory.Exists(settings.LocalFolder)
+                if (!settings.SyncPaused && _oauth.IsAuthenticated && settings.SyncFolders.Count > 0
+                    && settings.SyncFolders.All(folder => Directory.Exists(folder.Path))
                     && due <= DateTimeOffset.UtcNow && retryNotBefore <= DateTimeOffset.UtcNow)
                 {
                     var result = await _engine.RunAsync(manual: false, cancellationToken: _shutdown.Token);

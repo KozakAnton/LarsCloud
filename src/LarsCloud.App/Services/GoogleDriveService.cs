@@ -117,6 +117,34 @@ public sealed class GoogleDriveService
         if (response.StatusCode != HttpStatusCode.NotFound) await EnsureSuccessAsync(response, cancellationToken);
     }
 
+    public async Task MoveFileAsync(string driveId, string destinationParentId,
+        CancellationToken cancellationToken = default)
+    {
+        var metadataUrl = $"{ApiBase}/files/{Uri.EscapeDataString(driveId)}?fields=id,parents";
+        string[] parents;
+        using (var metadataResponse = await SendAuthorizedAsync(
+                   () => new HttpRequestMessage(HttpMethod.Get, metadataUrl), cancellationToken))
+        {
+            await EnsureSuccessAsync(metadataResponse, cancellationToken);
+            using var document = JsonDocument.Parse(await metadataResponse.Content.ReadAsStringAsync(cancellationToken));
+            parents = document.RootElement.TryGetProperty("parents", out var parentArray)
+                ? parentArray.EnumerateArray().Select(x => x.GetString()).Where(x => !string.IsNullOrWhiteSpace(x)).Cast<string>().ToArray()
+                : Array.Empty<string>();
+        }
+
+        if (parents.Contains(destinationParentId, StringComparer.OrdinalIgnoreCase)) return;
+        var query = new StringBuilder($"addParents={Uri.EscapeDataString(destinationParentId)}&fields=id,parents");
+        if (parents.Length > 0)
+            query.Append("&removeParents=").Append(Uri.EscapeDataString(string.Join(',', parents)));
+
+        using var response = await SendAuthorizedAsync(() => new HttpRequestMessage(HttpMethod.Patch,
+            $"{ApiBase}/files/{Uri.EscapeDataString(driveId)}?{query}")
+        {
+            Content = new StringContent("{}", Encoding.UTF8, "application/json")
+        }, cancellationToken);
+        await EnsureSuccessAsync(response, cancellationToken);
+    }
+
     private async Task<DriveFolder> GetOrCreateFolderAsync(string name, string parentId, CancellationToken cancellationToken)
     {
         var q = $"name='{EscapeQuery(name)}' and '{EscapeQuery(parentId)}' in parents and trashed=false and mimeType='{FolderMime}'";
@@ -160,7 +188,13 @@ public sealed class GoogleDriveService
             {
                 name,
                 parents = new[] { parentId },
-                appProperties = new { larsCloudPath = file.RelativePath, larsCloudDevice = Environment.MachineName }
+                appProperties = new
+                {
+                    larsCloudFolderId = file.SyncFolderId,
+                    larsCloudFolder = file.SyncFolderName,
+                    larsCloudPath = file.RelativePath,
+                    larsCloudDevice = Environment.MachineName
+                }
             })
             : JsonSerializer.Serialize(new { name });
 
@@ -191,7 +225,13 @@ public sealed class GoogleDriveService
             {
                 name,
                 parents = new[] { parentId },
-                appProperties = new { larsCloudPath = file.RelativePath, larsCloudDevice = Environment.MachineName }
+                appProperties = new
+                {
+                    larsCloudFolderId = file.SyncFolderId,
+                    larsCloudFolder = file.SyncFolderName,
+                    larsCloudPath = file.RelativePath,
+                    larsCloudDevice = Environment.MachineName
+                }
             })
             : JsonSerializer.Serialize(new { name });
 

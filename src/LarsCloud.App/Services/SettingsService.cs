@@ -56,8 +56,10 @@ public sealed class SettingsService
 
     public async Task ResetServiceDataAsync()
     {
-        var preservedFolder = Current.LocalFolder;
-        Current = new AppSettings { LocalFolder = preservedFolder };
+        var preservedFolders = Current.SyncFolders
+            .Select(folder => new SyncFolderSettings { Id = folder.Id, Path = folder.Path })
+            .ToList();
+        Current = new AppSettings { SyncFolders = preservedFolders };
         await SaveAsync();
     }
 }
