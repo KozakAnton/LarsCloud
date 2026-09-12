@@ -14,10 +14,10 @@ Workflow уже має `permissions: contents: write`, тому `GITHUB_TOKEN` �
 
 ```bash
 git add .
-git commit -m "Lar's Cloud 1.1.0"
+git commit -m "Lar's Cloud 1.1.1"
 git push origin main
-git tag v1.1.0
-git push origin v1.1.0
+git tag v1.1.1
+git push origin v1.1.1
 ```
 
 GitHub Actions на `windows-latest`:
@@ -33,7 +33,7 @@ GitHub Actions на `windows-latest`:
 
 1. Внесіть зміни.
 2. Оновіть `CHANGELOG.md`.
-3. Створіть більший SemVer-тег, наприклад `v1.1.0`.
+3. Створіть більший SemVer-тег, наприклад `v1.1.1`.
 4. Після публікації встановлена версія знайде Release через `GET /repos/{owner}/{repo}/releases/latest`.
 
 ## Умови автооновлення

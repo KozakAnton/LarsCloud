@@ -65,7 +65,7 @@ artifacts\installer\LarsCloud_Setup.exe.sha256
 
 ## Автоматичне збирання через GitHub
 
-У репозиторії вже є `.github/workflows/release.yml`. Додайте секрет `GOOGLE_CLIENT_ID`, створіть тег `v1.1.0` і відправте його на GitHub. Windows runner протестує програму, збере Installer, порахує SHA-256 і створить GitHub Release. Покроково: [docs/GITHUB_RELEASES.md](docs/GITHUB_RELEASES.md).
+У репозиторії вже є `.github/workflows/release.yml`. Додайте секрет `GOOGLE_CLIENT_ID`, створіть тег `v1.1.1` і відправте його на GitHub. Windows runner протестує програму, збере Installer, порахує SHA-256 і створить GitHub Release. Покроково: [docs/GITHUB_RELEASES.md](docs/GITHUB_RELEASES.md).
 
 ## Дані на комп’ютері користувача
 

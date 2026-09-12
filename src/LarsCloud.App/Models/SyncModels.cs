@@ -20,11 +20,17 @@ public sealed record LocalFileCandidate(
     string Sha256,
     FileState? PreviousState);
 
+public sealed record LocalDirectoryCandidate(
+    string SyncFolderId,
+    string SyncFolderName,
+    string RelativePath);
+
 public sealed record ScanResult(
     long TotalBytes,
     int TotalFiles,
     long UploadBytes,
     IReadOnlyList<LocalFileCandidate> ChangedFiles,
+    IReadOnlyList<LocalDirectoryCandidate> Directories,
     IReadOnlySet<string> CurrentFileKeys);
 
 public static class SyncFileKey

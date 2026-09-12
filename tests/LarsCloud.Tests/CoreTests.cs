@@ -1,5 +1,6 @@
 using LarsCloud.Infrastructure;
 using LarsCloud.Models;
+using LarsCloud.Services;
 
 namespace LarsCloud.Tests;
 
@@ -65,6 +66,42 @@ public sealed class CoreTests
     {
         Assert.NotEqual(SyncFileKey.Create("folder-a", "video.mp4"),
             SyncFileKey.Create("folder-b", "video.mp4"));
+    }
+
+    [Fact]
+    public void DriveMetadata_RemainsWithinGoogleLimitForLongUnicodePath()
+    {
+        var longPath = string.Join("/", Enumerable.Repeat("Дуже довга українська назва папки", 30)) + "/файл.txt";
+
+        var properties = DriveMetadata.CreateAppProperties(new string('x', 500), longPath);
+
+        Assert.All(properties, property => Assert.True(
+            DriveMetadata.GetUtf8Size(property.Key, property.Value) <= DriveMetadata.MaximumPropertyUtf8Bytes));
+        Assert.Equal(properties["lcId"], DriveMetadata.CreateAppProperties(new string('x', 500), longPath)["lcId"]);
+        Assert.NotEqual(properties["lcId"], DriveMetadata.CreateAppProperties(new string('x', 500), longPath + ".new")["lcId"]);
+    }
+
+    [Fact]
+    public void DirectoryTree_IncludesEveryNestedAndEmptyFolder()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "LarsCloudDirectoryTree", Guid.NewGuid().ToString("N"));
+        try
+        {
+            Directory.CreateDirectory(root);
+            for (var index = 0; index < 12; index++)
+                Directory.CreateDirectory(Path.Combine(root, $"Folder{index}"));
+            Directory.CreateDirectory(Path.Combine(root, "Folder0", "Nested", "Empty"));
+
+            var directories = FileScanner.GetRelativeDirectoryTree(root);
+
+            Assert.Equal(15, directories.Count);
+            Assert.Contains("Folder0/Nested/Empty", directories);
+            Assert.Contains("Folder11", directories);
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
     }
 
     [Fact]

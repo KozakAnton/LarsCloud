@@ -27,6 +27,7 @@ public sealed class FileScanner
         var previous = (await _database.GetAllFilesAsync(cancellationToken))
             .ToDictionary(x => SyncFileKey.Create(x.SyncFolderId, x.RelativePath), StringComparer.OrdinalIgnoreCase);
         var changed = new List<LocalFileCandidate>();
+        var directories = new List<LocalDirectoryCandidate>();
         var current = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         long totalBytes = 0;
         var totalFiles = 0;
@@ -41,6 +42,9 @@ public sealed class FileScanner
 
         foreach (var syncFolder in syncFolders)
         {
+            directories.AddRange(GetRelativeDirectoryTree(syncFolder.Path, cancellationToken)
+                .Select(relativePath => new LocalDirectoryCandidate(syncFolder.Id, syncFolder.Name, relativePath)));
+
             foreach (var fullPath in Directory.EnumerateFiles(syncFolder.Path, "*", options))
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -67,7 +71,30 @@ public sealed class FileScanner
         }
 
         progress?.Report((totalFiles, totalBytes));
-        return new ScanResult(totalBytes, totalFiles, changed.Sum(x => x.Size), changed, current);
+        return new ScanResult(totalBytes, totalFiles, changed.Sum(x => x.Size), changed, directories, current);
+    }
+
+    public static IReadOnlyList<string> GetRelativeDirectoryTree(string rootPath,
+        CancellationToken cancellationToken = default)
+    {
+        var options = new EnumerationOptions
+        {
+            RecurseSubdirectories = true,
+            IgnoreInaccessible = true,
+            ReturnSpecialDirectories = false,
+            AttributesToSkip = FileAttributes.ReparsePoint
+        };
+        var directories = new List<string> { "" };
+        foreach (var fullPath in Directory.EnumerateDirectories(rootPath, "*", options))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            directories.Add(Path.GetRelativePath(rootPath, fullPath).Replace('\\', '/'));
+        }
+
+        return directories
+            .OrderBy(path => path.Count(character => character == '/'))
+            .ThenBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
 
     private static async Task<string> ComputeSha256Async(string path, CancellationToken cancellationToken)

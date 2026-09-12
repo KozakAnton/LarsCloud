@@ -81,6 +81,15 @@ public sealed class SyncEngine
             if (about.Quota.Remaining is long remaining && scan.UploadBytes > remaining)
                 throw new DriveApiException($"Недостатньо місця на Google Drive. Потрібно {Formatters.Bytes(scan.UploadBytes)}, доступно {Formatters.Bytes(remaining)}.");
 
+            Report(new SyncProgress(SyncRunStatus.Running, "Створення повної структури папок на Google Drive…",
+                "", 0, 0, 0, scan.UploadBytes, 0, null));
+            foreach (var directory in scan.Directories)
+            {
+                token.ThrowIfCancellationRequested();
+                await _drive.EnsureRelativeFolderAsync(
+                    BuildDriveDirectory(directory.SyncFolderName, directory.RelativePath), folders.Device.Id, token);
+            }
+
             var stopwatch = Stopwatch.StartNew();
             for (var index = 0; index < scan.ChangedFiles.Count; index++)
             {

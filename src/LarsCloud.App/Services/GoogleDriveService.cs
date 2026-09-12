@@ -188,13 +188,7 @@ public sealed class GoogleDriveService
             {
                 name,
                 parents = new[] { parentId },
-                appProperties = new
-                {
-                    larsCloudFolderId = file.SyncFolderId,
-                    larsCloudFolder = file.SyncFolderName,
-                    larsCloudPath = file.RelativePath,
-                    larsCloudDevice = Environment.MachineName
-                }
+                appProperties = DriveMetadata.CreateAppProperties(file.SyncFolderId, file.RelativePath)
             })
             : JsonSerializer.Serialize(new { name });
 
@@ -225,13 +219,7 @@ public sealed class GoogleDriveService
             {
                 name,
                 parents = new[] { parentId },
-                appProperties = new
-                {
-                    larsCloudFolderId = file.SyncFolderId,
-                    larsCloudFolder = file.SyncFolderName,
-                    larsCloudPath = file.RelativePath,
-                    larsCloudDevice = Environment.MachineName
-                }
+                appProperties = DriveMetadata.CreateAppProperties(file.SyncFolderId, file.RelativePath)
             })
             : JsonSerializer.Serialize(new { name });
 
@@ -378,6 +366,8 @@ public sealed class GoogleDriveService
 
         var friendly = response.StatusCode switch
         {
+            _ when ContainsAny(signal, "Properties and app properties are limited to 124 byte")
+                => "Google Drive відхилив метадані файла через перевищення допустимого розміру. Оновіть Lar’s Cloud до актуальної версії та повторіть синхронізацію.",
             HttpStatusCode.Unauthorized => "Потрібно повторно увійти в Google-акаунт.",
             HttpStatusCode.Forbidden when ContainsAny(signal,
                 "serviceDisabled", "accessNotConfigured", "api_not_activated",
